@@ -12,7 +12,6 @@ def get_predictors():
     """
     Retrieves all needed  predictors, load or unzip:
     coreference
-    open information
     dependency
     semantic role
 
@@ -23,8 +22,6 @@ def get_predictors():
                   'predictor': Predictor}}
     """
     predictors = {
-        "open information": {
-            'path': "https://storage.googleapis.com/allennlp-public-models/openie-model.2020.03.26.tar.gz"},
         "dependency": {
             'path': "https://storage.googleapis.com/allennlp-public-models/biaffine-dependency-parser-ptb-2020.04.06.tar.gz"},
         "semantic role": {
@@ -59,6 +56,25 @@ def get_predictors():
 
 
 def get_text_info(filename, predictors):
+    """
+    Retrieves info from one file:
+    Coreference in all text
+
+    semantic role: verbs and their arguments
+    dependency: full tree
+
+    Parameters
+    ----------
+    filename: str
+    predictors: dict
+
+
+    Returns
+    -------
+
+    """
+    predictors_names = ["dependency", "semantic role"]
+
     with open(filename) as f:
         text = f.read()
 
@@ -75,7 +91,6 @@ def get_text_info(filename, predictors):
     # extract information
     tokenized_text = predictors['tokenizer']['predictor'].tokenize(text)
 
-    predictors_names = ["open information", "dependency", "semantic role"]
     sentences_info = []
     for sentence_index, sentence in enumerate(tokenized_text):
         sentence_info = {}
@@ -89,6 +104,17 @@ def get_text_info(filename, predictors):
 
 
 def extract_texts_info(files=[]):
+    """
+    Retrieves info from each file
+    Parameters
+    ----------
+    files: list of str
+
+    Returns
+    -------
+    out: list
+        list of text info
+    """
 
     if not len(files):
         return []
