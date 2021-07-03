@@ -59,7 +59,6 @@ def get_predictors():
 
 
 def get_text_info(filename, predictors):
-
     with open(filename) as f:
         text = f.read()
 
@@ -89,10 +88,24 @@ def get_text_info(filename, predictors):
     return text_info
 
 
+def extract_texts_info(files=[]):
+
+    if not len(files):
+        return []
+
+    predictors = get_predictors()
+
+    texts_info = []
+    for filepath in files:
+        info = get_text_info(filepath, predictors)
+        texts_info.append(info)
+    return texts_info
+
+
 def example_usage():
     FILE_NAME = "/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt"
-    predictors = get_predictors()
-    text_info = get_text_info(FILE_NAME, predictors)
+    files = [FILE_NAME]
+    texts_info = extract_texts_info(files)
 
     print("Done")
 
