@@ -2,23 +2,23 @@ import logging
 from allennlp.predictors.predictor import Predictor
 import allennlp_models.tagging
 
-
 import nltk.data
 
 logger = logging.getLogger('dev')
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.INFO)
 
 
 def get_predictors():
     """
-    Retrieves all needed  predictors:
+    Retrieves all needed  predictors, load or unzip:
     coreference
     open information
     dependency
     semantic role
+
     Returns
     -------
-    out : dict of dict
+    out : dict of {str: str}
         {'name': {'path': url,
                   'predictor': Predictor}}
     """
@@ -34,71 +34,72 @@ def get_predictors():
     }
 
     logger = logging.getLogger('dev')
-    logger.info("Start loading predictors.")
+    logging.info("Start loading predictors.")
     logger.setLevel(logging.WARNING)
 
     for name in predictors:
         logger.setLevel(logging.INFO)
-        logger.info(f'Loading: {name}...')
+        logging.info(f'Loading: {name}...')
         logger.setLevel(logging.WARNING)
 
         predictors[name]['predictor'] = Predictor.from_path(predictors[name]['path'])
 
     logger.setLevel(logging.INFO)
-    logger.INFO("Predictors loaded.")
+    logging.info(f'Loading: tokenizer...')
+    logger.setLevel(logging.WARNING)
+
+    # using nltk for splitting to sentences
+    predictors['tokenizer'] = {'path': 'tokenizers/punkt/english.pickle'}
+    predictors['tokenizer']['predictor'] = nltk.data.load(predictors['tokenizer']['path'])
+
+    logger.setLevel(logging.INFO)
+    logging.info("Predictors loaded.")
 
     return predictors
 
-# text file name
-# TODO: make files list
-FILE_NAME = "/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt"
 
-# using nltk for splitting to sentences
-tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+def get_text_info(filename):
+    predictors = get_predictors()
 
-# coreference resolution
-coreference_finder = Predictor.from_path()
+    with open(filename) as f:
+        text = f.read()
 
-# various info
-open_information_extractor = Predictor.from_path()
-dependency_parser = Predictor.from_path()
-semantic_role_labeler = Predictor.from_path()
+    logging.info("File is loaded.")
 
-# --------------------------------------------------------------
-# PARSING
-# --------------------------------------------------------------
+    text_info = {}
 
-logger.setLevel(logging.INFO)
+    # finding coreference
+    coreferences = predictors['coreference']['predictor'].predict(document=text)
+    text_info['coreferences'] = coreferences
 
-with open(FILE_NAME) as f:
-    text = f.read()
+    logging.info("Predicting coreferences")
 
-logger.info("File is loaded.")
+    # extract information
+    tokenized_text = predictors['tokenizer']['predictor'].tokenize(text)
 
-text_info = {}
+    predictors_names = ["open information", "dependency", "semantic role"]
+    sentences_info = []
+    for sentence_index, sentence in enumerate(tokenized_text):
+        sentence_info = {}
+        for predictor_name in predictors_names:
+            parsed_data = predictors[predictor_name]['predictor'].predict(sentence)
+            sentence_info[predictor_name] = parsed_data
+        sentences_info.append(sentence_info)
 
-# finding coreference
+    text_info['sentences_info'] = sentences_info
+    return text_info
 
-coreferences = coreference_finder.predict(document=text)
-text_info['coreferences'] = coreferences
+    # text_info['coreferences']['clusters_words'] = [[" ".join(text_info['coreferences']['document'][words[0]:words[1] + 1])
+    #                                                 for words in cluster]
+    #                                                for cluster in text_info['coreferences']['clusters']]
 
-logger.info("Predicting coreferences")
 
-# extract information
-tokenized_text = tokenizer.tokenize(text)
-predictors = {"open information": open_information_extractor,
-              "dependancy": dependency_parser,
-              "semantic role": semantic_role_labeler}
-sentences_info = []
-for sentence_index, sentence in enumerate(tokenized_text):
-    sentence_info = {}
-    for predictor_name, predictor in predictors.items():
-        parsed_data = predictor.predict(sentence)
-        sentence_info[predictor_name] = parsed_data
-    sentences_info.append(sentence_info)
+def example_usage():
+    FILE_NAME = "/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt"
+    text_info = get_text_info(FILE_NAME)
 
-text_info['sentences_info'] = sentence_info
-print("Done")
-text_info['coreferences']['clusters_words'] = [[" ".join(text_info['coreferences']['document'][words[0]:words[1] + 1])
-                                                for words in cluster]
-                                               for cluster in text_info['coreferences']['clusters']]
+    print("Done")
+
+
+if __name__ == "__main__":
+    example_usage()
