@@ -1,10 +1,28 @@
+
 class graph:
     __nodes_number = 0
 
     def __init__(self, text_info):
+        graph.__nodes_number = 0
         self.trees = []
         for sentence_info in text_info['sentences_info']:
             self.trees.append(graph.get_tree(sentence_info))
+        self.G = graph.get_graph_from_trees(self.trees)
+
+
+    @staticmethod
+    def get_graph_from_trees(trees):
+        V = []
+        E = []
+
+        # removing empty sentences
+        trees = [tree for tree in trees if len(tree['children'])]
+
+        # if all text has no verbs return empty graph
+        if not len(trees):
+            return V, E
+
+
 
     @staticmethod
     def get_tree(sentence_info):
@@ -80,104 +98,15 @@ class graph:
 
 def example_usage():
     # get_tree
-    sentence_info = {
-        'dependency': {'arc_loss': 0.2748850882053375, 'tag_loss': 0.285218209028244, 'loss': 0.5601032972335815,
-                       'words': ['This', 'week', 'we', 'decided', 'to', 'look', 'at', 'a', 'small', 'family', '-',
-                                 'run', 'restaurant', 'in', 'the', 'village', 'of', 'Wardleton', '.'],
-                       'pos': ['DET', 'NOUN', 'PRON', 'VERB', 'PART', 'VERB', 'ADP', 'DET', 'ADJ', 'NOUN', 'PUNCT',
-                               'VERB', 'NOUN', 'ADP', 'DET', 'NOUN', 'ADP', 'PROPN', 'PUNCT'],
-                       'predicted_dependencies': ['nsubj', 'dep', 'nsubj', 'root', 'dep', 'xcomp', 'prep', 'dep', 'dep',
-                                                  'dep', 'dep', 'dep', 'dep', 'prep', 'dep', 'pobj', 'prep', 'pobj',
-                                                  'punct'],
-                       'predicted_heads': [4, 4, 4, 0, 6, 4, 6, 13, 10, 13, 13, 13, 6, 13, 16, 14, 16, 17, 4],
-                       'hierplane_tree': {
-                           'text': 'This week we decided to look at a small family - run restaurant in the village of Wardleton .',
-                           'root': {'word': 'decided', 'nodeType': 'root', 'attributes': ['VERB'], 'link': 'root',
-                                    'spans': [{'start': 13, 'end': 21}], 'children': [
-                                   {'word': 'This', 'nodeType': 'nsubj', 'attributes': ['DET'], 'link': 'nsubj',
-                                    'spans': [{'start': 0, 'end': 5}]},
-                                   {'word': 'week', 'nodeType': 'dep', 'attributes': ['NOUN'], 'link': 'dep',
-                                    'spans': [{'start': 5, 'end': 10}]},
-                                   {'word': 'we', 'nodeType': 'nsubj', 'attributes': ['PRON'], 'link': 'nsubj',
-                                    'spans': [{'start': 10, 'end': 13}]},
-                                   {'word': 'look', 'nodeType': 'xcomp', 'attributes': ['VERB'], 'link': 'xcomp',
-                                    'spans': [{'start': 24, 'end': 29}], 'children': [
-                                       {'word': 'to', 'nodeType': 'dep', 'attributes': ['PART'], 'link': 'dep',
-                                        'spans': [{'start': 21, 'end': 24}]},
-                                       {'word': 'at', 'nodeType': 'prep', 'attributes': ['ADP'], 'link': 'prep',
-                                        'spans': [{'start': 29, 'end': 32}]},
-                                       {'word': 'restaurant', 'nodeType': 'dep', 'attributes': ['NOUN'], 'link': 'dep',
-                                        'spans': [{'start': 53, 'end': 64}], 'children': [
-                                           {'word': 'a', 'nodeType': 'dep', 'attributes': ['DET'], 'link': 'dep',
-                                            'spans': [{'start': 32, 'end': 34}]},
-                                           {'word': 'family', 'nodeType': 'dep', 'attributes': ['NOUN'], 'link': 'dep',
-                                            'spans': [{'start': 40, 'end': 47}], 'children': [
-                                               {'word': 'small', 'nodeType': 'dep', 'attributes': ['ADJ'],
-                                                'link': 'dep', 'spans': [{'start': 34, 'end': 40}]}]},
-                                           {'word': '-', 'nodeType': 'dep', 'attributes': ['PUNCT'], 'link': 'dep',
-                                            'spans': [{'start': 47, 'end': 49}]},
-                                           {'word': 'run', 'nodeType': 'dep', 'attributes': ['VERB'], 'link': 'dep',
-                                            'spans': [{'start': 49, 'end': 53}]},
-                                           {'word': 'in', 'nodeType': 'prep', 'attributes': ['ADP'], 'link': 'prep',
-                                            'spans': [{'start': 64, 'end': 67}], 'children': [
-                                               {'word': 'village', 'nodeType': 'pobj', 'attributes': ['NOUN'],
-                                                'link': 'pobj', 'spans': [{'start': 71, 'end': 79}], 'children': [
-                                                   {'word': 'the', 'nodeType': 'dep', 'attributes': ['DET'],
-                                                    'link': 'dep', 'spans': [{'start': 67, 'end': 71}]},
-                                                   {'word': 'of', 'nodeType': 'prep', 'attributes': ['ADP'],
-                                                    'link': 'prep', 'spans': [{'start': 79, 'end': 82}], 'children': [
-                                                       {'word': 'Wardleton', 'nodeType': 'pobj',
-                                                        'attributes': ['PROPN'], 'link': 'pobj',
-                                                        'spans': [{'start': 82, 'end': 92}]}]}]}]}]}]},
-                                   {'word': '.', 'nodeType': 'punct', 'attributes': ['PUNCT'], 'link': 'punct',
-                                    'spans': [{'start': 92, 'end': 94}]}]},
-                           'nodeTypeToStyle': {'root': ['color5', 'strong'], 'dep': ['color5', 'strong'],
-                                               'nsubj': ['color1'], 'nsubjpass': ['color1'], 'csubj': ['color1'],
-                                               'csubjpass': ['color1'], 'pobj': ['color2'], 'dobj': ['color2'],
-                                               'iobj': ['color2'], 'mark': ['color2'], 'pcomp': ['color2'],
-                                               'xcomp': ['color2'], 'ccomp': ['color2'], 'acomp': ['color2'],
-                                               'aux': ['color3'], 'cop': ['color3'], 'det': ['color3'],
-                                               'conj': ['color3'], 'cc': ['color3'], 'prep': ['color3'],
-                                               'number': ['color3'], 'possesive': ['color3'], 'poss': ['color3'],
-                                               'discourse': ['color3'], 'expletive': ['color3'], 'prt': ['color3'],
-                                               'advcl': ['color3'], 'mod': ['color4'], 'amod': ['color4'],
-                                               'tmod': ['color4'], 'quantmod': ['color4'], 'npadvmod': ['color4'],
-                                               'infmod': ['color4'], 'advmod': ['color4'], 'appos': ['color4'],
-                                               'nn': ['color4'], 'neg': ['color0'], 'punct': ['color0']},
-                           'linkToPosition': {'nsubj': 'left', 'nsubjpass': 'left', 'csubj': 'left',
-                                              'csubjpass': 'left', 'pobj': 'right', 'dobj': 'right', 'iobj': 'right',
-                                              'pcomp': 'right', 'xcomp': 'right', 'ccomp': 'right', 'acomp': 'right'}}},
-        'semantic role': {'verbs': [{'verb': 'decided',
-                                     'description': '[ARGM-TMP: This week] [ARG0: we] [V: decided] [ARG1: to look at a small family - run restaurant in the village of Wardleton] .',
-                                     'tags': ['B-ARGM-TMP', 'I-ARGM-TMP', 'B-ARG0', 'B-V', 'B-ARG1', 'I-ARG1', 'I-ARG1',
-                                              'I-ARG1', 'I-ARG1', 'I-ARG1', 'I-ARG1', 'I-ARG1', 'I-ARG1', 'I-ARG1',
-                                              'I-ARG1', 'I-ARG1', 'I-ARG1', 'I-ARG1', 'O']}, {'verb': 'look',
-                                                                                              'description': 'This week [ARG0: we] decided to [V: look] [ARG1: at a small family - run restaurant in the village of Wardleton] .',
-                                                                                              'tags': ['O', 'O',
-                                                                                                       'B-ARG0', 'O',
-                                                                                                       'O', 'B-V',
-                                                                                                       'B-ARG1',
-                                                                                                       'I-ARG1',
-                                                                                                       'I-ARG1',
-                                                                                                       'I-ARG1',
-                                                                                                       'I-ARG1',
-                                                                                                       'I-ARG1',
-                                                                                                       'I-ARG1',
-                                                                                                       'I-ARG1',
-                                                                                                       'I-ARG1',
-                                                                                                       'I-ARG1',
-                                                                                                       'I-ARG1',
-                                                                                                       'I-ARG1', 'O']},
-                                    {'verb': 'run',
-                                     'description': 'This week we decided to look at a small [ARG0: family] - [V: run] [ARG1: restaurant] in the village of Wardleton .',
-                                     'tags': ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'B-ARG0', 'O', 'B-V',
-                                              'B-ARG1', 'O', 'O', 'O', 'O', 'O', 'O']}],
-                          'words': ['This', 'week', 'we', 'decided', 'to', 'look', 'at', 'a', 'small', 'family', '-',
-                                    'run', 'restaurant', 'in', 'the', 'village', 'of', 'Wardleton', '.']}}
+    from tests.get_info import get_sentence_info
+    sentence_info = get_sentence_info()
     root = graph.get_tree(sentence_info)
+    del sentence_info
 
-    # text_info
-    # sentences_info =
+    from tests.get_info import get_text_info
+    text_info = get_text_info()
+    G = graph(text_info)
+    del text_info
 
     print("Done")
 
