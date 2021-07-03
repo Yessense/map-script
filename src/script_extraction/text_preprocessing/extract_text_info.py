@@ -89,10 +89,6 @@ def get_text_info(filename):
     text_info['sentences_info'] = sentences_info
     return text_info
 
-    # text_info['coreferences']['clusters_words'] = [[" ".join(text_info['coreferences']['document'][words[0]:words[1] + 1])
-    #                                                 for words in cluster]
-    #                                                for cluster in text_info['coreferences']['clusters']]
-
 
 def example_usage():
     FILE_NAME = "/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt"
