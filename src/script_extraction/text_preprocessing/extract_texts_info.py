@@ -9,6 +9,7 @@ logger.setLevel(logging.INFO)
 
 
 def get_predictors():
+
     """
     Retrieves all needed  predictors, load or unzip:
     coreference
