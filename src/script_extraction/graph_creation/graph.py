@@ -26,30 +26,45 @@ class graph:
         V.update(current_vertices)
 
         # iterating through all roots from each tree
-        for tree_number, tree in enumerate(trees):
+        for tree in trees:
             # here will be added all roots nodes from current sentence
             # to link them to next sentence
             new_current_vertices = {}
 
             # iterating through all children
-            for child_number, child in enumerate(tree['children']):
+            for child in tree['children']:
                 # getting vertex
                 v = graph.get_vertice_from_dict(child)
                 node_number = v['node_number']
+
+                # add children tree
+                graph.add_children_to_graph(child, V, E)
 
                 # add created vertex to dict
                 new_current_vertices[node_number] = v
 
             # creating links from previous vertex to all next
             for node_number in current_vertices:
-                E[node_number] = list(new_current_vertices.keys())
+                if node_number in E:
+                    E[node_number].extend(list(new_current_vertices.keys()))
+                else:
+                    E[node_number] = list(new_current_vertices.keys())
 
             # next step, switching roots to link
             current_vertices = new_current_vertices
             V.update(current_vertices)
 
+
         # add end vertex
         end_vertex = graph.get_end_vertice()
+        end_number = end_vertex['node_number']
+        V[end_number] = end_vertex
+
+        for node_number in current_vertices:
+            if node_number in E:
+                E[node_number].append(end_number)
+            else:
+                E[node_number] = [end_number]
 
         return V, E
 
@@ -62,8 +77,22 @@ class graph:
         return v
 
     @staticmethod
-    def fill_V_E_from_trees(V, E):
-        pass
+    def add_children_to_graph(root, V, E):
+
+        for child in root['children']:
+            v = graph.get_vertice_from_dict(child)
+            node_number = v['node_number']
+            root_node_number = root['node_number']
+
+            V[node_number] = v
+
+            if root_node_number in E:
+                E[root_node_number].append(node_number)
+            else:
+                E[root_node_number] = [node_number]
+
+            graph.add_children_to_graph(child, V, E)
+
 
     @staticmethod
     def get_tree(sentence_info):
@@ -157,7 +186,8 @@ def example_usage():
 
     from tests.get_info import get_text_info
     text_info = get_text_info()
-    G = graph(text_info)
+    trees = graph(text_info).trees
+
 
     from tests.get_info import get_text_info
     _text_info = get_text_info()
@@ -172,11 +202,42 @@ def example_usage():
     vertice_from_dict = _G.get_vertice_from_dict(_G.trees[0]['children'][0])
     del _G, _text_info
 
+    # get_graph_from_trees ( V, E)
     from tests.get_info import get_text_info
     _text_info = get_text_info()
     _G = graph(text_info)
     V, E = _G.get_graph_from_trees(_G.trees)
     del _G, _text_info
+
+    # crete visualization
+    from tests.get_info import get_text_info
+    import networkx as nx
+    from pyvis.network import Network
+
+    _text_info = get_text_info()
+    _G = graph(text_info)
+    _V, _E = _G.get_graph_from_trees(_G.trees)
+    del _G, _text_info
+
+    net = Network(notebook=True, height='100%', width='100%')
+
+    Graph = nx.Graph()
+
+    def get_desc_from_v(v):
+        return f"{v['word']}:{v['node_number']}"
+
+    for edge in E:
+        for node_number in E[edge]:
+            Graph.add_edge(get_desc_from_v(V[edge]), get_desc_from_v(V[node_number]))
+
+    Graph.nodes['start:-1']['color'] = 'red'
+    Graph.nodes['start:-1']['size'] = 20
+    Graph.nodes['end:-2']['color'] = 'red'
+    Graph.nodes['end:-2']['size'] = 20
+
+    net.from_nx(Graph)
+    net.show("graph.html")
+
     print("Done")
 
 
