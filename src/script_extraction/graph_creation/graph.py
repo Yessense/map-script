@@ -1,4 +1,3 @@
-
 class graph:
     __nodes_number = 0
 
@@ -7,13 +6,12 @@ class graph:
         self.trees = []
         for sentence_info in text_info['sentences_info']:
             self.trees.append(graph.get_tree(sentence_info))
-        self.G = graph.get_graph_from_trees(self.trees)
-
+        self.G = graph.get_graph_from_trees(trees=self.trees)
 
     @staticmethod
     def get_graph_from_trees(trees):
-        V = []
-        E = []
+        V = {}
+        E = {}
 
         # removing empty sentences
         trees = [tree for tree in trees if len(tree['children'])]
@@ -22,7 +20,50 @@ class graph:
         if not len(trees):
             return V, E
 
+        # vertices from last step to create links
+        start_vertex = graph.get_start_vertice()
+        current_vertices = {start_vertex['node_number']: start_vertex}
+        V.update(current_vertices)
 
+        # iterating through all roots from each tree
+        for tree_number, tree in enumerate(trees):
+            # here will be added all roots nodes from current sentence
+            # to link them to next sentence
+            new_current_vertices = {}
+
+            # iterating through all children
+            for child_number, child in enumerate(tree['children']):
+                # getting vertex
+                v = graph.get_vertice_from_dict(child)
+                node_number = v['node_number']
+
+                # add created vertex to dict
+                new_current_vertices[node_number] = v
+
+            # creating links from previous vertex to all next
+            for node_number in current_vertices:
+                E[node_number] = list(new_current_vertices.keys())
+
+            # next step, switching roots to link
+            current_vertices = new_current_vertices
+            V.update(current_vertices)
+
+        # add end vertex
+        end_vertex = graph.get_end_vertice()
+
+        return V, E
+
+    @staticmethod
+    def get_vertice_from_dict(v_dict):
+        v = {}
+        for key in v_dict:
+            if key != 'children':
+                v[key] = v_dict[key]
+        return v
+
+    @staticmethod
+    def fill_V_E_from_trees(V, E):
+        pass
 
     @staticmethod
     def get_tree(sentence_info):
@@ -95,19 +136,47 @@ class graph:
                 # current word is not a verb and there is no children
                 return
 
+    @staticmethod
+    def get_start_vertice():
+        start = {'node_number': -1,
+                 'word': 'start'}
+        return start
+
+    @staticmethod
+    def get_end_vertice():
+        end = {'node_number': -2,
+               'word': 'end'}
+        return end
+
 
 def example_usage():
     # get_tree
     from tests.get_info import get_sentence_info
     sentence_info = get_sentence_info()
     root = graph.get_tree(sentence_info)
-    del sentence_info
 
     from tests.get_info import get_text_info
     text_info = get_text_info()
     G = graph(text_info)
-    del text_info
 
+    from tests.get_info import get_text_info
+    _text_info = get_text_info()
+    _G = graph(text_info)
+    start_vertice = _G.get_start_vertice()
+    end_vertice = _G.get_end_vertice()
+    del _G, _text_info
+
+    from tests.get_info import get_text_info
+    _text_info = get_text_info()
+    _G = graph(text_info)
+    vertice_from_dict = _G.get_vertice_from_dict(_G.trees[0]['children'][0])
+    del _G, _text_info
+
+    from tests.get_info import get_text_info
+    _text_info = get_text_info()
+    _G = graph(text_info)
+    V, E = _G.get_graph_from_trees(_G.trees)
+    del _G, _text_info
     print("Done")
 
 
