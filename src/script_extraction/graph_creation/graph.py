@@ -1,3 +1,6 @@
+
+
+
 class graph:
     __nodes_number = 0
 
@@ -148,6 +151,17 @@ class graph:
 
     @staticmethod
     def recursive_verb_search(node, node_for_adding):
+        """
+        Find all children-verbs and add them to tree
+        Parameters
+        ----------
+        node: dict
+        node_for_adding: dict
+
+        Returns
+        -------
+
+        """
         if 'VERB' in node['attributes']:
             # current word is a verb
             # add him to tree
@@ -179,40 +193,36 @@ class graph:
 
 
 def example_usage():
-    # get_tree
+    from tests.get_info import get_text_info
     from tests.get_info import get_sentence_info
+    from networkx import Graph
+    from pyvis.network import Network
+    # get_tree
     sentence_info = get_sentence_info()
     root = graph.get_tree(sentence_info)
 
-    from tests.get_info import get_text_info
     text_info = get_text_info()
     trees = graph(text_info).trees
 
 
-    from tests.get_info import get_text_info
     _text_info = get_text_info()
     _G = graph(text_info)
     start_vertice = _G.get_start_vertice()
     end_vertice = _G.get_end_vertice()
     del _G, _text_info
 
-    from tests.get_info import get_text_info
     _text_info = get_text_info()
     _G = graph(text_info)
     vertice_from_dict = _G.get_vertice_from_dict(_G.trees[0]['children'][0])
     del _G, _text_info
 
     # get_graph_from_trees ( V, E)
-    from tests.get_info import get_text_info
     _text_info = get_text_info()
     _G = graph(text_info)
     V, E = _G.get_graph_from_trees(_G.trees)
     del _G, _text_info
 
-    # crete visualization
-    from tests.get_info import get_text_info
-    import networkx as nx
-    from pyvis.network import Network
+    # create visualization
 
     _text_info = get_text_info()
     _G = graph(text_info)
@@ -221,7 +231,7 @@ def example_usage():
 
     net = Network(notebook=True, height='100%', width='100%')
 
-    Graph = nx.Graph()
+    Graph = Graph()
 
     def get_desc_from_v(v):
         return f"{v['word']}:{v['node_number']}"
