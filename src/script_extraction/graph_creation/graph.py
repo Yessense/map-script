@@ -1,6 +1,3 @@
-
-
-
 class graph:
     __nodes_number = 0
 
