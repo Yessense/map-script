@@ -1,3 +1,6 @@
+from src.script_extraction.text_preprocessing.semantic_roles import add_semantic_roles
+
+
 class graph:
     __nodes_number = 0
 
@@ -54,7 +57,6 @@ class graph:
             current_vertices = new_current_vertices
             V.update(current_vertices)
 
-
         # add end vertex
         end_vertex = graph.get_end_vertice()
         end_number = end_vertex['node_number']
@@ -78,7 +80,6 @@ class graph:
 
     @staticmethod
     def add_children_to_graph(root, V, E):
-
         for child in root['children']:
             v = graph.get_vertice_from_dict(child)
             node_number = v['node_number']
@@ -92,7 +93,6 @@ class graph:
                 E[root_node_number] = [node_number]
 
             graph.add_children_to_graph(child, V, E)
-
 
     @staticmethod
     def get_tree(sentence_info):
@@ -201,7 +201,6 @@ def example_usage():
     text_info = get_text_info()
     trees = graph(text_info).trees
 
-
     _text_info = get_text_info()
     _G = graph(text_info)
     start_vertice = _G.get_start_vertice()
@@ -219,29 +218,50 @@ def example_usage():
     V, E = _G.get_graph_from_trees(_G.trees)
     del _G, _text_info
 
+    # get_roles ( V, E)
+    _text_info = get_text_info()
+    _roles_text_info = add_semantic_roles(_text_info)
+    _G = graph(_roles_text_info)
+    r_V, r_E = _G.get_graph_from_trees(_G.trees)
+    del _G, _text_info
+
     # create visualization
 
     _text_info = get_text_info()
-    _G = graph(text_info)
-    _V, _E = _G.get_graph_from_trees(_G.trees)
+    _roles_text_info = add_semantic_roles(_text_info)
+    _G = graph(_roles_text_info)
+    V, E = _G.get_graph_from_trees(_G.trees)
     del _G, _text_info
-
-    net = Network(notebook=True, height='100%', width='100%')
 
     Graph = Graph()
 
     def get_desc_from_v(v):
         return f"{v['word']}:{v['node_number']}"
 
+    def get_role_desc(argument, word, node_number):
+        return f"{argument}:{word}:{node_number}"
+
     for edge in E:
         for node_number in E[edge]:
+            if 'roles' in V[node_number]:
+                for role in V[node_number]['roles']:
+                    for role_word in V[node_number]['roles'][role]['words']:
+                        if role != "V":
+                            Graph.add_edge(get_desc_from_v(V[node_number]),
+                                           get_role_desc(role, role_word[0], role_word[1]))
             Graph.add_edge(get_desc_from_v(V[edge]), get_desc_from_v(V[node_number]))
 
-    Graph.nodes['start:-1']['color'] = 'red'
-    Graph.nodes['start:-1']['size'] = 20
-    Graph.nodes['end:-2']['color'] = 'red'
-    Graph.nodes['end:-2']['size'] = 20
+    for node in ['start:-1', 'end:-2']:
+        Graph.nodes[node]['size'] = 20
+        Graph.nodes[node]['color'] = '#2f7ed8'
 
+    for node in Graph.nodes:
+        if "ARG" in node:
+            Graph.nodes[node]['size'] = 5
+            Graph.nodes[node]['color'] = '#89A54E'
+            Graph.nodes[node]['len'] = 0.5
+
+    net = Network(notebook=True, height='100%', width='100%')
     net.from_nx(Graph)
     net.show("graph.html")
 
