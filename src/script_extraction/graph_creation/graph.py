@@ -1,4 +1,5 @@
-from src.script_extraction.text_preprocessing.semantic_roles import add_semantic_roles
+from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
+from src.script_extraction.text_preprocessing.semantic_roles import add_semantic_roles, create_coreferences_clusters
 
 
 class graph:
@@ -218,17 +219,13 @@ def example_usage():
     V, E = _G.get_graph_from_trees(_G.trees)
     del _G, _text_info
 
-    # get_roles ( V, E)
-    _text_info = get_text_info()
-    _roles_text_info = add_semantic_roles(_text_info)
-    _G = graph(_roles_text_info)
-    r_V, r_E = _G.get_graph_from_trees(_G.trees)
-    del _G, _text_info
-
     # create visualization
 
     _text_info = get_text_info()
+    # _text_info = extract_texts_info(["/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/cinema.txt"])[0]
+    create_coreferences_clusters(_text_info)
     _roles_text_info = add_semantic_roles(_text_info)
+
     _G = graph(_roles_text_info)
     V, E = _G.get_graph_from_trees(_G.trees)
     del _G, _text_info
@@ -241,14 +238,24 @@ def example_usage():
     def get_role_desc(argument, word, node_number):
         return f"{argument}:{word}:{node_number}"
 
+    def get_cluster_desc(cluster_number, string):
+        return f"{cluster_number}:CLUSTER:{string}"
+
     for edge in E:
         for node_number in E[edge]:
             if 'roles' in V[node_number]:
                 for role in V[node_number]['roles']:
                     for role_word in V[node_number]['roles'][role]['words']:
                         if role != "V":
+                            # action to role
                             Graph.add_edge(get_desc_from_v(V[node_number]),
                                            get_role_desc(role, role_word[0], role_word[1]))
+                    if 'cluster' in V[node_number]['roles'][role]:
+                        cluster_number = V[node_number]['roles'][role]['cluster']
+                        Graph.add_edge(get_desc_from_v(V[node_number]),
+                                       get_cluster_desc(cluster_number,
+                                                        _roles_text_info['coreferences']['clusters_info'][cluster_number][0]['string']))
+            # action to action
             Graph.add_edge(get_desc_from_v(V[edge]), get_desc_from_v(V[node_number]))
 
     for node in ['start:-1', 'end:-2']:
@@ -259,6 +266,10 @@ def example_usage():
         if "ARG" in node:
             Graph.nodes[node]['size'] = 5
             Graph.nodes[node]['color'] = '#89A54E'
+            Graph.nodes[node]['len'] = 0.5
+        if "CLUSTER" in node:
+            Graph.nodes[node]['size'] = 10
+            Graph.nodes[node]['color'] = '#FA7E1E'
             Graph.nodes[node]['len'] = 0.5
 
     net = Network(notebook=True, height='100%', width='100%')

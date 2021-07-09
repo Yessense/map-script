@@ -141,6 +141,9 @@ def add_semantic_roles(text_info):
                 # writing their spans to next list
                 roles[argument_type]['spans'] = spans
 
+                if spans in sentence_info['coreferences']:
+                    roles[argument_type]['cluster'] = sentence_info['coreferences'][spans]['cluster']
+
                 # updating search position
                 search_position = match_object_span[1]
 
@@ -155,7 +158,7 @@ def add_sentences_bounds(text_info):
     for sentence in text_info['sentences_info']:
         number_of_words_in_sentence = len(sentence['dependency']['words'])
         sentence['sentence_bounds'] = (
-            number_of_previous_words + 1, number_of_previous_words + number_of_words_in_sentence)
+            number_of_previous_words, number_of_previous_words + number_of_words_in_sentence)
         number_of_previous_words += number_of_words_in_sentence
 
 
@@ -172,42 +175,49 @@ def add_words_bounds(text_info):
 def create_coreferences_clusters(text_info):
     add_sentences_bounds(text_info)
     add_words_bounds(text_info)
-    new_clusters = []
+    clusters_info = []
     for cluster in text_info['coreferences']['clusters']:
-        new_cluster = []
+        cluster_info = []
         for entry in cluster:
-
-            for sentence in text_info['sentences_info']:
-                if entry[1] <= sentence['sentence_bounds'][1] and entry[0] >= sentence['sentence_bounds'][0]:
+            for sentence_number, sentence in enumerate(text_info['sentences_info']):
+                if entry[1] < sentence['sentence_bounds'][1] and entry[0] >= sentence['sentence_bounds'][0]:
                     start_word_number = entry[0] - sentence['sentence_bounds'][0]
                     end_word_number = entry[1] - sentence['sentence_bounds'][0]
 
                     start_symbol_number = sentence['words_bounds'][start_word_number][0]
                     end_symbol_number = sentence['words_bounds'][end_word_number][1]
 
-                    entry_info = {'words_spans': (start_word_number, end_word_number),
+                    entry_info = {'sentence_number': sentence_number,
+                                  'words_spans': (start_word_number, end_word_number),
                                   'symbols_spans': (start_symbol_number, end_symbol_number),
                                   'string': sentence['dependency']['hierplane_tree']['text'][
-                                            start_symbol_number:end_symbol_number]}
+                                            start_symbol_number:end_symbol_number - 1]}
 
-                    new_cluster.append(entry_info)
-        new_clusters.append(new_cluster)
-    text_info['coreferences']['span_clusters'] = new_clusters
-
+                    cluster_info.append(entry_info)
+                    break
+        clusters_info.append(cluster_info)
+    text_info['coreferences']['clusters_info'] = clusters_info
+    for sentence in text_info['sentences_info']:
+        sentence['coreferences'] = {}
+    for cluster_number, cluster in enumerate(clusters_info):
+        for entry in cluster:
+            text_info['sentences_info'][entry['sentence_number']][
+                'coreferences'][entry['symbols_spans']] = entry
+            text_info['sentences_info'][entry['sentence_number']][
+                'coreferences'][entry['symbols_spans']]['cluster'] = cluster_number
 
 
 def example_usage():
     # text_info
     text_info = get_text_info()
 
-    # add semantic roles
-    text_info_with_semantic_roles = get_text_info()
-    add_semantic_roles(text_info_with_semantic_roles)
 
     # create coreferences clusters
     text_info_with_coreferences_clusters = get_text_info()
     create_coreferences_clusters(text_info_with_coreferences_clusters)
+    add_semantic_roles(text_info_with_coreferences_clusters)
 
+    # semantic_roles with coreferences
     print("DONE")
 
 
