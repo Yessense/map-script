@@ -63,7 +63,6 @@ def get_roots(root, spans, words_list=None, level=0):
     -------
     out : list of (str, int, (int, int))
         [(word, tree height, (start, end))]
-
     """
     if words_list is None:
         words_list = []

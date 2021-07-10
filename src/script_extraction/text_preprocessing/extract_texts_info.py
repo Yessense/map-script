@@ -23,8 +23,6 @@ def get_predictors():
                   'predictor': Predictor}}
     """
     predictors = {
-        "dependency": {
-            'path': "https://storage.googleapis.com/allennlp-public-models/biaffine-dependency-parser-ptb-2020.04.06.tar.gz"},
         "semantic role": {
             'path': "https://storage.googleapis.com/allennlp-public-models/structured-prediction-srl-bert.2020.12.15.tar.gz"},
         "coreference": {
