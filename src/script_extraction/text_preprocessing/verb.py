@@ -1,9 +1,12 @@
 from src.script_extraction.text_preprocessing.role import Role
 
 
-class Verb(Role):
-    def __init__(self, argument_type, sentence_number, word_spans, string, cluster=None):
-        super().__init__(argument_type, sentence_number, word_spans, string, cluster)
+class Verb:
+    def __init__(self, text: str, sentence_number=None, words_spans=None, cluster=None):
+        self.text = text
+        self.sentence_number = sentence_number
+        self.words_spans = words_spans
+        self.cluster = cluster
         self.roles = []
 
     def add_role(self, role):
@@ -19,3 +22,6 @@ class Verb(Role):
 
         """
         self.roles.append(role)
+
+    def __repr__(self):
+        return self.text.__repr__() + " " +  self.roles.__repr__()

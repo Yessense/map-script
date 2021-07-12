@@ -13,7 +13,7 @@ def add_sentences_bounds(text_info: Dict) -> None:
         number_of_previous_words += number_of_words_in_sentence
 
 
-def create_coreferences_clusters(text_info: Dict) -> List[Cluster]:
+def extract_clusters(text_info: Dict) -> List[Cluster]:
     add_sentences_bounds(text_info)
     clusters = []
     for cluster_info in text_info['coreferences']['clusters']:
@@ -39,7 +39,7 @@ def example_usage():
     text_info = get_text_info()
 
     # create coreferences clusters
-    clusters = create_coreferences_clusters(text_info)
+    clusters = extract_clusters(text_info)
 
     # semantic_roles with coreferences
     print("DONE")
