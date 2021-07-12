@@ -1,8 +1,9 @@
-from src.script_extraction.text_preprocessing.cluster import Cluster, Element
+from typing import Dict, List, Any
+from src.script_extraction.text_preprocessing.cluster import Cluster, Element # type: ignore
 from tests.get_info import get_text_info
 
 
-def add_sentences_bounds(text_info):
+def add_sentences_bounds(text_info: Dict) -> None:
     number_of_previous_words = 0
 
     for sentence in text_info['sentences_info']:
@@ -12,7 +13,7 @@ def add_sentences_bounds(text_info):
         number_of_previous_words += number_of_words_in_sentence
 
 
-def create_coreferences_clusters(text_info):
+def create_coreferences_clusters(text_info: Dict) -> List[Cluster]:
     add_sentences_bounds(text_info)
     clusters = []
     for cluster_info in text_info['coreferences']['clusters']:
@@ -29,7 +30,7 @@ def create_coreferences_clusters(text_info):
 
                     cluster.add_element(element)
         clusters.append(cluster)
-    text_info['coreferences']['clusters_info'] = clusters
+    return clusters
 
 
 
@@ -37,10 +38,8 @@ def example_usage():
     # text_info
     text_info = get_text_info()
 
-
     # create coreferences clusters
-    text_info_with_coreferences_clusters = get_text_info()
-    create_coreferences_clusters(text_info_with_coreferences_clusters)
+    clusters = create_coreferences_clusters(text_info)
 
     # semantic_roles with coreferences
     print("DONE")
