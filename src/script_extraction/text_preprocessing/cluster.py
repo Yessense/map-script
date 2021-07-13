@@ -13,12 +13,15 @@ class Cluster:
         self.index = Cluster.__index
         Cluster.__index += 1
         self.elements = []
+        self.argument_type = 'cluster'
+
 
     def add_element(self, element):
         self.elements.append(element)
 
     def __repr__(self):
-        return self.index.__repr__() + " " + self.elements.__repr__()
+
+        return f'{self.index} {set([element.string for element in self.elements]).__repr__()}'
 
 
 class Element:
@@ -30,6 +33,9 @@ class Element:
         self.sentence_number = sentence_number
         self.word_spans = word_spans
         self.string = string
+
+    def index(self):
+        return self.sentence_number, self.word_spans
 
     def __repr__(self):
         return {'sentence_number': self.sentence_number,

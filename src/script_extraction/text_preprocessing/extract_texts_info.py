@@ -102,7 +102,7 @@ def get_text_info(filename, predictors):
     return text_info
 
 
-def extract_texts_info(files=[]):
+def extract_texts_info(files=None):
     """
     Retrieves info from each file
     Parameters
@@ -115,6 +115,8 @@ def extract_texts_info(files=[]):
         list of text info
     """
 
+    if files is None:
+        files = []
     if not len(files):
         return []
 

@@ -1,5 +1,4 @@
 from src.script_extraction.text_preprocessing.role import Role
-from src.script_extraction.text_preprocessing.verb import Verb
 from tests.get_info import get_text_info
 import re
 
@@ -9,8 +8,9 @@ inside_arg = re.compile("(I)-(.*)")
 
 def process_verb(verb_info, words, sentence_number):
     # verb to add all roles
-    verb = Verb(text=verb_info['verb'],
-                sentence_number=sentence_number)
+    verb = Role(text=verb_info['verb'],
+                sentence_number=sentence_number,
+                argument_type='V')
 
     # iterate through all words
     i: int = 0
@@ -41,9 +41,9 @@ def process_verb(verb_info, words, sentence_number):
                 verb.words_spans = (start_pos, end_pos + 1)
             else:
                 role = Role(argument_type=argument_type,
-                         sentence_number=sentence_number,
-                         word_spans=(start_pos, end_pos + 1),
-                         text=text)
+                            sentence_number=sentence_number,
+                            words_spans=(start_pos, end_pos + 1),
+                            text=text)
                 verb.add_role(role)
         else:
             i += 1
