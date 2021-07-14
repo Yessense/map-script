@@ -72,7 +72,7 @@ def get_text_info(filename, predictors):
     -------
 
     """
-    predictors_names = ["dependency", "semantic role"]
+    predictors_names = ["semantic role"]
 
     with open(filename) as f:
         text = f.read()
