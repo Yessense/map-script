@@ -78,7 +78,7 @@ class Graph:
                             cluster=cluster)
             self.V[role.index()] = vertex
 
-            if cluster:
+            if cluster is not None:
                 self.add_edge(role.index(), self.V[cluster].index, label=f'Noun phrase:{cluster}')
 
 
@@ -109,7 +109,7 @@ class Graph:
           }
         }
         """)
-        net.show("graph.html")
+        net.show(f"{path}.html")
 
 
 

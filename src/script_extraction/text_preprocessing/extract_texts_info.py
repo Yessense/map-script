@@ -1,15 +1,17 @@
 import logging
-from allennlp.predictors.predictor import Predictor
-import allennlp_models.tagging
 
+from allennlp.predictors.predictor import Predictor
 import nltk.data
 
-logger = logging.getLogger('dev')
-logger.setLevel(logging.INFO)
+logging.getLogger("predictor").setLevel(logging.CRITICAL)
+logging.getLogger("allennlp").setLevel(logging.CRITICAL)
+logging.getLogger("filelock").setLevel(logging.CRITICAL)
+logging.basicConfig(level=logging.INFO,
+                    format="%(asctime)s %(levelname)-8s %(message)s",
+                    datefmt='%H:%M:%S')
 
 
 def get_predictors():
-
     """
     Retrieves all needed  predictors, load or unzip:
     coreference
@@ -23,34 +25,28 @@ def get_predictors():
                   'predictor': Predictor}}
     """
     predictors = {
-        "semantic role": {
+        "semantic_roles": {
             'path': "https://storage.googleapis.com/allennlp-public-models/structured-prediction-srl-bert.2020.12.15.tar.gz"},
-        "coreference": {
+        "coreferences": {
             'path': "https://storage.googleapis.com/allennlp-public-models/coref-spanbert-large-2021.03.10.tar.gz"},
     }
 
-    logger = logging.getLogger('dev')
-    logging.info("Start loading predictors.")
-    logger.setLevel(logging.WARNING)
+    logging.info("-" * 40)
+    logging.info("Loading predictors")
+    logging.info("-" * 40)
 
     for name in predictors:
-        logger.setLevel(logging.INFO)
-        logging.info(f'Loading: {name}...')
-        logger.setLevel(logging.WARNING)
+        logging.info(f'Loading: {name}.')
 
         predictors[name]['predictor'] = Predictor.from_path(predictors[name]['path'])
 
-    logger.setLevel(logging.INFO)
-    logging.info(f'Loading: tokenizer...')
-    logger.setLevel(logging.WARNING)
+    logging.info(f'Loading: nltk tokenizer.')
 
     # using nltk for splitting to sentences
     predictors['tokenizer'] = {'path': 'tokenizers/punkt/english.pickle'}
     predictors['tokenizer']['predictor'] = nltk.data.load(predictors['tokenizer']['path'])
 
-    logger.setLevel(logging.INFO)
     logging.info("Predictors loaded.")
-
     return predictors
 
 
@@ -72,24 +68,25 @@ def get_text_info(filename, predictors):
     -------
 
     """
-    predictors_names = ["semantic role"]
+    predictors_names = ["semantic_roles"]
 
     with open(filename) as f:
         text = f.read()
 
-    logging.info("File is loaded.")
+    logging.info(f"File {filename} is loaded.")
 
     text_info = {}
 
+    logging.info("Predicting coreferences")
     # finding coreference
-    coreferences = predictors['coreference']['predictor'].predict(document=text)
+    coreferences = predictors['coreferences']['predictor'].predict(document=text)
     text_info['coreferences'] = coreferences
 
-    logging.info("Predicting coreferences")
 
     # extract information
     tokenized_text = predictors['tokenizer']['predictor'].tokenize(text)
 
+    logging.info("Predicting sentences info")
     sentences_info = []
     for sentence_index, sentence in enumerate(tokenized_text):
         sentence_info = {}
@@ -121,16 +118,19 @@ def extract_texts_info(files=None):
         return []
 
     predictors = get_predictors()
-
+    logging.info("-" * 40)
+    logging.info("Processing files")
+    logging.info("-" * 40)
     texts_info = []
     for filepath in files:
         info = get_text_info(filepath, predictors)
         texts_info.append(info)
+    logging.info("All files processed")
     return texts_info
 
 
 def example_usage():
-    FILE_NAME = "/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt"
+    FILE_NAME = "/texts/temp/restaurant.txt"
     files = [FILE_NAME]
     texts_info = extract_texts_info(files)
 
@@ -139,4 +139,3 @@ def example_usage():
 
 if __name__ == "__main__":
     example_usage()
-

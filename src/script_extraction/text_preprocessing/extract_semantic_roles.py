@@ -53,8 +53,8 @@ def process_verb(verb_info, words, sentence_number):
 def extract_semantic_roles(sentence_info, sentence_number):
     semantic_roles = []
 
-    for verb_info in sentence_info['semantic role']['verbs']:
-        verb = process_verb(verb_info, sentence_info['semantic role']['words'], sentence_number)
+    for verb_info in sentence_info['semantic_roles']['verbs']:
+        verb = process_verb(verb_info, sentence_info['semantic_roles']['words'], sentence_number)
         semantic_roles.append(verb)
 
     return semantic_roles

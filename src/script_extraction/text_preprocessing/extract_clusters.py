@@ -7,7 +7,7 @@ def add_sentences_bounds(text_info: Dict) -> None:
     number_of_previous_words = 0
 
     for sentence in text_info['sentences_info']:
-        number_of_words_in_sentence = len(sentence['dependency']['words'])
+        number_of_words_in_sentence = len(sentence['semantic_roles']['words'])
         sentence['sentence_bounds'] = (
             number_of_previous_words, number_of_previous_words + number_of_words_in_sentence)
         number_of_previous_words += number_of_words_in_sentence
