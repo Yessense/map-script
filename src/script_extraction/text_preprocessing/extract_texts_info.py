@@ -1,5 +1,5 @@
 import logging
-
+from typing import List, Dict
 from allennlp.predictors.predictor import Predictor
 import nltk.data
 
@@ -99,7 +99,7 @@ def get_text_info(filename, predictors):
     return text_info
 
 
-def extract_texts_info(files=None):
+def extract_texts_info(files=None) -> List[Dict]:
     """
     Retrieves info from each file
     Parameters
@@ -129,7 +129,7 @@ def extract_texts_info(files=None):
     return texts_info
 
 
-def example_usage():
+def example_usage() -> None:
     FILE_NAME = "/texts/temp/restaurant.txt"
     files = [FILE_NAME]
     texts_info = extract_texts_info(files)

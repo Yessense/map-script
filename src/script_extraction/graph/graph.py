@@ -41,11 +41,16 @@ class Graph:
         for sentence_number, sentence_info in enumerate(text_info['sentences_info']):
             self.verbs += extract_semantic_roles(sentence_info, sentence_number)
 
+
+
         self.V: Dict[Any: Vertex] = {}
         self.E: Dict[Any: Edge] = {}
 
         for verb in self.verbs:
             self.add_verb_to_graph(verb)
+
+    def get_graph(self):
+        return self.V, self.E
 
     def add_verb_to_graph(self, verb: Role):
         # if no childs
@@ -86,32 +91,32 @@ class Graph:
         edge = Edge(v1, v2, label)
         self.E[edge.index()] = edge
 
-    def show_graph(self, path):
-        from pyvis.network import Network
-        net = Network(notebook=True, height='100%', width='100%')
 
-        for v in self.V:
-            color = None
-            if self.V[v].data.argument_type == 'V':
-                color = '#2f7ed8'
-            if self.V[v].data.argument_type == 'cluster':
-                color = '#FA7E1E'
 
-            net.add_node(str(self.V[v].index), label=self.V[v].label, color=color, size=10)
-        for e in self.E:
-            net.add_edge(str(self.E[e].v1), str(self.E[e].v2), label=self.E[e].label)
-        net.set_options("""
-        var options = {
-          "physics": {
-            "barnesHut": {
-             "gravitationalConstant": -10050
-              }
+def show_graph(V, E, path):
+    from pyvis.network import Network
+    net = Network(notebook=True, height='100%', width='100%')
+
+    for v in V:
+        color = None
+        if V[v].data.argument_type == 'V':
+            color = '#2f7ed8'
+        if V[v].data.argument_type == 'cluster':
+            color = '#FA7E1E'
+
+        net.add_node(str(V[v].index), label=V[v].label, color=color, size=10)
+    for e in E:
+        net.add_edge(str(E[e].v1), str(E[e].v2), label=E[e].label)
+    net.set_options("""
+    var options = {
+      "physics": {
+        "barnesHut": {
+         "gravitationalConstant": -10050
           }
-        }
-        """)
-        net.show(f"{path}.html")
-
-
+      }
+    }
+    """)
+    net.show(path)
 
 def example_usage():
     text_info = get_text_info()
