@@ -4,16 +4,17 @@ from src.script_extraction.text_preprocessing.extract_texts_info import extract_
 from src.script_extraction.text_preprocessing.role import Role
 from tests.get_info import get_text_info
 from typing import Tuple, Dict, Any, Set, Union
-from nltk.corpus import wordnet as wn
-from pyvis.network import Network
+from nltk.corpus import wordnet as wn # type: ignore
+from pyvis.network import Network # type: ignore
 
 
 class Vertex:
     def __init__(self, index: Any, # unique value
                  label: str, # show label for pyvis
                  tp: Union[str, None], # for select color
-                 data: Set[str],
-                 pos: Union[str, None] = None):
+                 data: Set[str], # strings, representing of possible values for role
+                 pos: str = "", # part of speech for adding synonyms... etc
+                 ) -> None:
         self.index = index
         self.label = label
         self.tp = tp
@@ -77,7 +78,7 @@ class Graph:
             role_end_word_num = role.index()[1][1]
             role_sentence = role.index()[0]
 
-            part_of_speech = None
+            part_of_speech = ""
             if role_end_word_num - role_start_word_num == 1:
                 part_of_speech = self.parts_of_speech[role_sentence][role_start_word_num]
 
@@ -142,7 +143,7 @@ def add_hyponyms_hypernyms_synonyms(V: Dict[Any, Vertex],
     # iterate by vertices
     for v in V:
         # if we require this part of speech
-        if V[v].pos is not None and V[v].pos in allowed_pos_types:
+        if (V[v].pos is not None) and (V[v].pos in allowed_pos_types):
 
             extend_data = set()
             # checking each word in vertex
@@ -158,6 +159,8 @@ def add_hyponyms_hypernyms_synonyms(V: Dict[Any, Vertex],
                             pass
                         if hypernyms:
                             pass
+        else:
+            pass
             # add data to vertex
             V[v].data.update(extend_data)
     return None
