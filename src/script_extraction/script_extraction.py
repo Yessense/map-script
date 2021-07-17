@@ -22,7 +22,7 @@ def extract_all(files: List) -> List[Tuple[Dict[Any, Vertex], Dict[Any, Edge]]]:
         graphs.append(Graph(text_info).get_graph())
 
     for V, E in graphs:
-        add_hyponyms_hypernyms_synonyms(V)
+        add_hyponyms_hypernyms_synonyms(V, synonyms=True)
 
     for f, (V, E) in zip(file_names, graphs):
         show_graph(V, E, f)

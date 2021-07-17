@@ -3,8 +3,8 @@ import os
 import pickle
 from typing import List, Dict
 from allennlp.predictors.predictor import Predictor
-import nltk.data
-import hashlib
+import nltk.data # type: ignore
+import hashlib # type: ignore
 
 logging.getLogger("predictor").setLevel(logging.CRITICAL)
 logging.getLogger("allennlp").setLevel(logging.CRITICAL)
@@ -148,7 +148,7 @@ def extract_texts_info(files=None, saved_files_dir: str = None) -> List[Dict]:
 
 
 def example_usage() -> None:
-    FILE_NAME = "/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt"
+    FILE_NAME = "/texts/temp/restaurant.txt"
     files = [FILE_NAME]
     texts_info = extract_texts_info(files)
 

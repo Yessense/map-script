@@ -1,5 +1,4 @@
 from src.script_extraction.text_preprocessing.role import Role
-from tests.get_info import get_text_info
 import re
 
 start_arg = re.compile("(B)-(.*)")

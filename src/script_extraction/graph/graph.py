@@ -2,7 +2,6 @@ from src.script_extraction.text_preprocessing.extract_clusters import extract_cl
 from src.script_extraction.text_preprocessing.extract_semantic_roles import extract_semantic_roles
 from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 from src.script_extraction.text_preprocessing.role import Role
-from tests.get_info import get_text_info
 from typing import Tuple, Dict, Any, Set, Union
 from nltk.corpus import wordnet as wn # type: ignore
 from pyvis.network import Network # type: ignore
@@ -73,14 +72,18 @@ class Graph:
             return self.V[role.index()]
         # create vertex if not exist
         else:
-
             role_start_word_num = role.index()[1][0]
             role_end_word_num = role.index()[1][1]
             role_sentence = role.index()[0]
+            articles = ['the', 'a', 'an']
 
             part_of_speech = ""
             if role_end_word_num - role_start_word_num == 1:
                 part_of_speech = self.parts_of_speech[role_sentence][role_start_word_num]
+            elif (role_end_word_num - role_start_word_num == 2
+                  and role.text.split()[0].lower() in articles):
+                    part_of_speech = self.parts_of_speech[role_sentence][role_start_word_num + 1]
+                    role.text = role.text.split()[1]
 
             # checking vertex for being in cluster
             if role.index() in self.elements_dict:
@@ -159,8 +162,6 @@ def add_hyponyms_hypernyms_synonyms(V: Dict[Any, Vertex],
                             pass
                         if hypernyms:
                             pass
-        else:
-            pass
             # add data to vertex
             V[v].data.update(extend_data)
     return None

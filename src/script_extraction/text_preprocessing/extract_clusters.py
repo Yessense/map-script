@@ -1,6 +1,8 @@
+"""
+Add roles, clusters
+"""
 from typing import Dict, List, Any, Tuple
-from src.script_extraction.text_preprocessing.cluster import Cluster, Element # type: ignore
-from tests.get_info import get_text_info
+from src.script_extraction.text_preprocessing.cluster import Cluster, Element
 
 
 def add_sentences_bounds(text_info: Dict) -> None:
@@ -36,13 +38,8 @@ def extract_clusters(text_info: Dict) -> Tuple[List[Cluster], Dict[Any, int]]:
     return clusters, elements_dict
 
 
-
-def example_usage():
+def example_usage() -> None:
     # text_info
-    text_info = get_text_info()
-
-    # create coreferences clusters
-    clusters = extract_clusters(text_info)
 
     # semantic_roles with coreferences
     print("DONE")
