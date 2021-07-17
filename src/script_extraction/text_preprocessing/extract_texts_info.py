@@ -1,7 +1,10 @@
 import logging
+import os
+import pickle
 from typing import List, Dict
 from allennlp.predictors.predictor import Predictor
 import nltk.data
+import hashlib
 
 logging.getLogger("predictor").setLevel(logging.CRITICAL)
 logging.getLogger("allennlp").setLevel(logging.CRITICAL)
@@ -25,6 +28,8 @@ def get_predictors():
                   'predictor': Predictor}}
     """
     predictors = {
+        "dependency": {
+            'path': "https://storage.googleapis.com/allennlp-public-models/biaffine-dependency-parser-ptb-2020.04.06.tar.gz"},
         "semantic_roles": {
             'path': "https://storage.googleapis.com/allennlp-public-models/structured-prediction-srl-bert.2020.12.15.tar.gz"},
         "coreferences": {
@@ -68,7 +73,7 @@ def get_text_info(filename, predictors):
     -------
 
     """
-    predictors_names = ["semantic_roles"]
+    predictors_names = ["semantic_roles", "dependency"]
 
     with open(filename) as f:
         text = f.read()
@@ -81,7 +86,6 @@ def get_text_info(filename, predictors):
     # finding coreference
     coreferences = predictors['coreferences']['predictor'].predict(document=text)
     text_info['coreferences'] = coreferences
-
 
     # extract information
     tokenized_text = predictors['tokenizer']['predictor'].tokenize(text)
@@ -99,11 +103,12 @@ def get_text_info(filename, predictors):
     return text_info
 
 
-def extract_texts_info(files=None) -> List[Dict]:
+def extract_texts_info(files=None, saved_files_dir: str = None) -> List[Dict]:
     """
     Retrieves info from each file
     Parameters
     ----------
+    saved_files_dir: str
     files: list of str
 
     Returns
@@ -116,21 +121,34 @@ def extract_texts_info(files=None) -> List[Dict]:
         files = []
     if not len(files):
         return []
+    if saved_files_dir is None:
+        saved_files_dir = "/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/saved/"
 
-    predictors = get_predictors()
+    predictors = None
     logging.info("-" * 40)
     logging.info("Processing files")
     logging.info("-" * 40)
     texts_info = []
+
+    saved_files = [os.path.basename(f) for f in os.listdir(saved_files_dir)]
     for filepath in files:
-        info = get_text_info(filepath, predictors)
+        h = hashlib.sha1(filepath.encode()).hexdigest()
+        if h in saved_files:
+            with open(os.path.join(saved_files_dir, h), 'rb') as f:
+                info = pickle.load(f)
+        else:
+            if predictors is None:
+                predictors = get_predictors()
+            info = get_text_info(filepath, predictors)
+            with open(os.path.join(saved_files_dir, h), 'wb') as f:
+                pickle.dump(info, f)
         texts_info.append(info)
     logging.info("All files processed")
     return texts_info
 
 
 def example_usage() -> None:
-    FILE_NAME = "/texts/temp/restaurant.txt"
+    FILE_NAME = "/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt"
     files = [FILE_NAME]
     texts_info = extract_texts_info(files)
 

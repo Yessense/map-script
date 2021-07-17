@@ -15,6 +15,8 @@ class Cluster:
         self.elements = []
         self.argument_type = 'cluster'
 
+    def get_elements(self):
+        return set([e.string for e in self.elements])
 
     def add_element(self, element):
         self.elements.append(element)
