@@ -158,10 +158,12 @@ def add_hyponyms_hypernyms_synonyms(V: Dict[Any, Vertex],
                         # update our set
                         if synonyms:
                             extend_data.update(ss.lemma_names())
-                        if hyponyms:
-                            pass
                         if hypernyms:
-                            pass
+                            for hypernym_ss in ss.hypernyms():
+                                extend_data.update(hypernym_ss.lemma_names())
+                        if hyponyms:
+                            for hyponym_ss in ss.hyponyms():
+                                extend_data.update(hyponym_ss.lemma_names())
             # add data to vertex
             V[v].data.update(extend_data)
     return None
