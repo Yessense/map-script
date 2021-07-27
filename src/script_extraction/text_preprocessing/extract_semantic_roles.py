@@ -1,8 +1,68 @@
-from src.script_extraction.text_preprocessing.role import Role
+import dataclasses
+from dataclasses import field
+from typing import List, Any, Tuple
+from enum import Enum
 import re
+
+from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 
 start_arg = re.compile("(B)-(.*)")
 inside_arg = re.compile("(I)-(.*)")
+
+
+class Roles(Enum):
+    ARG0 = 'ARG0'
+    ARG1 = 'ARG1'
+    ARG2 = 'ARG2'
+    ARG3 = 'ARG3'
+    ARG4 = 'ARG4'
+    ARGM_TMP = 'ARGM-TMP'
+    ARGM_DIR = 'ARGM-DIR'
+    ARGM_DIS = 'ARGM-DIS'
+    ARGM_EXT = 'ARGM-EXT'
+    ARGM_LOC = 'ARGM-LOC'
+    ARGM_MNR = 'ARGM-MNR'
+    ARGM_MOD = 'ARGM-MOD'
+    ARGM_NEG = 'ARGM-NEG'
+    ARGM_PRD = 'ARGM-PRD'
+    ARGM_PRP = 'ARGM-PRP'
+    V = 'V'
+
+@dataclasses.dataclass
+class Position:
+    sentence_number: int
+    start_word: int
+    end_word: int
+
+
+@dataclasses.dataclass
+class Image:
+    position: Any
+    text: str
+
+
+@dataclasses.dataclass
+class Role:
+    text: str
+    position: Position
+    pos: str
+    images: List[Image]
+    arg_type: Roles
+
+
+@dataclasses.dataclass
+class Action:
+    text: str
+    position: Position
+    roles: List[Role] = field(default_factory=list)
+    actions: List[Any] = field(default_factory=list)
+    arg_type: Roles = Roles.V
+
+
+def process_action(action_info, words, sentence_number):
+    # action to add roles
+    action = Action(text=action_info['verb'],
+                    sentence_number=sentence_number)
 
 
 def process_verb(verb_info, words, sentence_number):
@@ -61,7 +121,8 @@ def extract_semantic_roles(sentence_info, sentence_number):
 
 def example_usage():
     # text_info
-    text_info = get_text_info()
+    filename = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/cinema.txt'
+    text_info = extract_texts_info([filename])[0]
 
     roles = extract_semantic_roles(text_info['sentences_info'][0], 5)
     print("DONE")
