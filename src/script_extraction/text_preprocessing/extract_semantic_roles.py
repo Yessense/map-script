@@ -6,9 +6,6 @@ import re
 
 from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 
-start_arg = re.compile("(B)-(.*)")
-inside_arg = re.compile("(I)-(.*)")
-
 
 class Roles(Enum):
     ARG0 = 'ARG0'
@@ -28,94 +25,148 @@ class Roles(Enum):
     ARGM_PRP = 'ARGM-PRP'
     V = 'V'
 
+
+class POS(Enum):
+    ADJ = 'ADJ'  # adjective
+    ADP = 'ADP'  # adposition
+    ADV = 'ADV'  # adverb
+    AUX = 'AUX'  # auxiliary
+    CCONJ = 'CCONJ'  # coordinating conjunction
+    DET = 'DET'  # determiner
+    INTJ = 'INTJ'  # interjection
+    NOUN = 'NOUN'  # noun
+    NUM = 'NUM'  # numeral
+    PART = 'PART'  # particle
+    PRON = 'PRON'  # pronoun
+    PROPN = 'PROPN'  # proper noun
+    PUNCT = 'PUNCT'  # punctuation
+    SCONJ = 'SCONJ'  # subordinating conjunction
+    SYM = 'SYM'  # symbol
+    VERB = 'VERB'  # verb
+    X = 'X'  # other
+    PHRASE = 'PHRASE'
+
+
 @dataclasses.dataclass
 class Position:
-    sentence_number: int
-    start_word: int
-    end_word: int
+    sentence_number: int = 0
+    start_word: int = 0
+    end_word: int = 0
+    start_symbol: int = 0
+    _end_symbol: int = 0
+
+    def words(self):
+        return self.end_word - self.start_word
+
+    @property
+    def end_symbol(self) -> int:
+        return self._end_symbol
+
+    @end_symbol.setter
+    def end_symbol(self, text: str) -> None:
+        self._end_symbol = self.start_symbol + len(text) + 1
 
 
 @dataclasses.dataclass
 class Image:
-    position: Any
+    position: Position
     text: str
 
 
 @dataclasses.dataclass
-class Role:
+class Obj:
+    """
+    Contains information about object
+    role type, images
+    """
     text: str
     position: Position
-    pos: str
-    images: List[Image]
     arg_type: Roles
+    pos: POS = POS.PHRASE
+    images: List[Image] = field(default_factory=list)
+
+    def set_part_of_speech(self, pos_list):
+        if self.position == 1:
+            self.pos = POS(pos_list[self.position.start_word])
 
 
 @dataclasses.dataclass
 class Action:
+    """
+    Contains information for action sign
+    Roles, objects, children Actions
+    """
     text: str
-    position: Position
-    roles: List[Role] = field(default_factory=list)
+    position: Position = Position()
+    roles: List[Obj] = field(default_factory=list)
     actions: List[Any] = field(default_factory=list)
     arg_type: Roles = Roles.V
 
+    def add_obj(self, obj: Obj) -> None:
+        self.roles.append(obj)
 
-def process_action(action_info, words, sentence_number):
+
+def process_action(action_info, pos_list, words, sentence_number):
+    # regex patterns to deal with BIO notation
+    start_arg = re.compile("(B)-(.*)")
+    inside_arg = re.compile("(I)-(.*)")
+
     # action to add roles
-    action = Action(text=action_info['verb'],
-                    sentence_number=sentence_number)
+    action: Action = Action(text=action_info['verb'])
 
-
-def process_verb(verb_info, words, sentence_number):
-    # verb to add all roles
-    verb = Role(text=verb_info['verb'],
-                sentence_number=sentence_number,
-                argument_type='V')
-
-    # iterate through all words
     i: int = 0
-    sentence_len = len(verb_info['tags'])
+    sentence_len = len(action_info['tags'])
+    current_symbol = 0
     while i < sentence_len:
-
         # if tag is begin of arg
-        if (match := re.fullmatch(start_arg, verb_info['tags'][i])) is not None:
+        if (match := re.fullmatch(start_arg, action_info['tags'][i])) is not None:
 
             # start processing one argument
             text = words[i]
-            start_pos = i
-            end_pos = i
+            position = Position(sentence_number=sentence_number,
+                                start_word=i,
+                                end_word=i + 1,
+                                start_symbol=current_symbol)
 
             # find argument type
             argument_type_spans = match.regs[2]
-            argument_type = verb_info['tags'][i][argument_type_spans[0]:argument_type_spans[1]]
+            argument_type: str = action_info['tags'][i][argument_type_spans[0]:argument_type_spans[1]]
 
+            current_symbol += len(words[i]) + 1
             # iterate through tags in search of current argument in-tags
             i += 1
-            while i < sentence_len and re.fullmatch(inside_arg, verb_info['tags'][i]) is not None:
+            while i < sentence_len and re.fullmatch(inside_arg, action_info['tags'][i]) is not None:
                 text += " " + words[i]
-                end_pos = i
-                i += 1
 
-            # if it is verb itself, fiil verb, otherwise create role and add to verb
-            if argument_type == 'V':
-                verb.words_spans = (start_pos, end_pos + 1)
+                current_symbol += len(words[i]) + 1
+                i += 1
+                position.end_word = i
+
+            position.end_symbol(text)
+
+            # add info to verb or role
+            if Roles(argument_type) == Roles.V:
+                action.position = position
             else:
-                role = Role(argument_type=argument_type,
-                            sentence_number=sentence_number,
-                            words_spans=(start_pos, end_pos + 1),
-                            text=text)
-                verb.add_role(role)
+                role = Obj(text=text,
+                           position=position,
+                           arg_type=Roles(argument_type))
+                role.set_part_of_speech()
+                action.add_obj(role)
         else:
+            current_symbol += len(words[i]) + 1
             i += 1
-    return verb
+    return action
 
 
 def extract_semantic_roles(sentence_info, sentence_number):
     semantic_roles = []
-
-    for verb_info in sentence_info['semantic_roles']['verbs']:
-        verb = process_verb(verb_info, sentence_info['semantic_roles']['words'], sentence_number)
-        semantic_roles.append(verb)
-
+    for action_info in sentence_info['semantic_roles']['verbs']:
+        action = process_action(action_info=action_info,
+                                pos_list=sentence_info['dependency']['pos'],
+                                words=sentence_info['semantic_roles']['words'],
+                                sentence_number=sentence_number)
+        semantic_roles.append(action)
     return semantic_roles
 
 
@@ -124,7 +175,9 @@ def example_usage():
     filename = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/cinema.txt'
     text_info = extract_texts_info([filename])[0]
 
-    roles = extract_semantic_roles(text_info['sentences_info'][0], 5)
+    actions = []
+    for i, sentence_info in enumerate(text_info['sentences_info']):
+        actions += extract_semantic_roles(sentence_info, i)
     print("DONE")
 
 
