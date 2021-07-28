@@ -4,6 +4,8 @@ from typing import List, Any, Tuple, Dict
 from enum import Enum
 import re
 import itertools
+from nltk.stem.wordnet import WordNetLemmatizer
+lemmatizer = WordNetLemmatizer()
 
 from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 
@@ -81,6 +83,9 @@ class Image:
     position: Position
     text: str
 
+    def index(self) -> str:
+        return str((self.position.sentence_number, self.position.start_symbol, self.position.end_symbol))
+
 
 @dataclasses.dataclass
 class Obj:
@@ -97,6 +102,9 @@ class Obj:
     def set_part_of_speech(self, pos_list):
         if self.position == 1:
             self.pos = POS(pos_list[self.position.start_word])
+
+    def index(self) -> str:
+        return str((self.position.sentence_number, self.position.start_symbol, self.position.end_symbol))
 
 
 @dataclasses.dataclass
@@ -116,6 +124,12 @@ class Action:
 
     def add_action(self, action: Any) -> None:
         self.actions.append(action)
+
+    def index(self) -> str:
+        return str((self.position.sentence_number, self.position.start_symbol, self.position.end_symbol))
+
+    def lemma(self) -> str:
+        return lemmatizer.lemmatize(self.text, 'v')
 
 
 def process_action(action_info, pos_list, words, sentence_number) -> Action:
@@ -180,6 +194,8 @@ def extract_actions(text_info):
                                     words=sentence_info['semantic_roles']['words'],
                                     sentence_number=i)
             actions.append(action)
+    actions = resolve_phrases(actions, text_info)
+    actions = assemble_actions(text_info, actions)
     return actions
 
 
@@ -232,7 +248,8 @@ def resolve_phrases(actions: List[Action], text_info: Dict[str, Any]):
     # convert trees to list
     trees_list = []
     for i, sentence_info in enumerate(text_info['sentences_info']):
-        trees_list.append(get_roots(sentence_info['dependency']['hierplane_tree']['root']))
+        trees_list.append(get_roots(sentence_info['dependency']['hierplane_tree']['root'],
+                                    sentence_number=i))
 
     for action in actions:
         for obj in action.objects:
@@ -250,17 +267,18 @@ def resolve_phrases(actions: List[Action], text_info: Dict[str, Any]):
     return actions
 
 
-def get_roots(node, words_list=None, level=0) -> List[Tuple]:
+def get_roots(node, sentence_number, words_list=None, level=0) -> List[Tuple]:
     if words_list is None:
         words_list = []
     words_list.append((level,
                        Image(text=node['word'],
                              pos=POS(node['attributes'][0]),
                              position=Position(start_symbol=node['spans'][0]['start'],
-                                               end_symbol=node['spans'][0]['end']))))
+                                               end_symbol=node['spans'][0]['end'],
+                                               sentence_number=sentence_number))))
     if 'children' in node:
         for child in node['children']:
-            get_roots(child, words_list, level + 1)
+            get_roots(child, sentence_number, words_list, level + 1)
     return words_list
 
 
