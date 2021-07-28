@@ -48,6 +48,11 @@ class POS(Enum):
     X = 'X'  # other
     PHRASE = 'PHRASE'
 
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value < other.value
+        return NotImplemented
+
 
 @dataclasses.dataclass
 class Position:
@@ -66,9 +71,13 @@ class Position:
     def get_dict_key(self):
         return self.sentence_number, self.start_symbol, self.end_symbol
 
+    def inside(self, position: Any):
+        return self.start_symbol >= position.start_symbol and self.end_symbol <= position.end_symbol
+
 
 @dataclasses.dataclass
 class Image:
+    pos: POS
     position: Position
     text: str
 
@@ -98,12 +107,12 @@ class Action:
     """
     text: str = ""
     position: Position = Position()
-    roles: List[Obj] = field(default_factory=list)
+    objects: List[Obj] = field(default_factory=list)
     actions: List[Any] = field(default_factory=list)
     arg_type: Roles = Roles.V
 
     def add_obj(self, obj: Obj) -> None:
-        self.roles.append(obj)
+        self.objects.append(obj)
 
     def add_action(self, action: Any) -> None:
         self.actions.append(action)
@@ -190,6 +199,9 @@ def assemble_actions(text_info: Dict[str, Any],
 
 
 def find_actions(sentence_number, node: Dict[str, Any], actions_dict, parent: Action) -> None:
+    """
+    Find and add child actions to each action
+    """
     index = (sentence_number, node['spans'][0]['start'], node['spans'][0]['end'])
     if index in actions_dict:
         if parent is not None:
@@ -200,12 +212,65 @@ def find_actions(sentence_number, node: Dict[str, Any], actions_dict, parent: Ac
             find_actions(sentence_number, child, actions_dict, parent)
 
 
+def is_accepted(image: Image):
+    """Check candidate"""
+    restricted_pos = {POS.PUNCT, POS.CCONJ}
+    return image.pos is not POS.PUNCT
+
+
+def select_from_candidates(candidates_for_obj: List[Tuple[int, Image]], min_level):
+    obj = sorted([image for level, image in candidates_for_obj if level == min_level], key=lambda x: x.pos)[0]
+    return obj
+
+
+def select_images(candidates_for_obj, new_obj, min_level):
+    images = [image for level, image in candidates_for_obj if image.position != new_obj.position]
+    return images
+
+
+def resolve_phrases(actions: List[Action], text_info: Dict[str, Any]):
+    # convert trees to list
+    trees_list = []
+    for i, sentence_info in enumerate(text_info['sentences_info']):
+        trees_list.append(get_roots(sentence_info['dependency']['hierplane_tree']['root']))
+
+    for action in actions:
+        for obj in action.objects:
+            if obj.pos == POS.PHRASE:
+                candidates_for_obj: List[Tuple[int, Image]] = [(level, image)
+                                                               for level, image in
+                                                               trees_list[obj.position.sentence_number]
+                                                               if image.position.inside(obj.position) and is_accepted(
+                        image)]
+                min_level = min([level for level, image in candidates_for_obj])
+                new_obj: Image = select_from_candidates(candidates_for_obj, min_level)
+                obj.pos = new_obj.pos
+                obj.text = new_obj.text
+                obj.images = select_images(candidates_for_obj, new_obj, min_level)
+    return actions
+
+
+def get_roots(node, words_list=None, level=0) -> List[Tuple]:
+    if words_list is None:
+        words_list = []
+    words_list.append((level,
+                       Image(text=node['word'],
+                             pos=POS(node['attributes'][0]),
+                             position=Position(start_symbol=node['spans'][0]['start'],
+                                               end_symbol=node['spans'][0]['end']))))
+    if 'children' in node:
+        for child in node['children']:
+            get_roots(child, words_list, level + 1)
+    return words_list
+
+
 def example_usage():
     # text_info
     filename = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/cinema.txt'
     text_info = extract_texts_info([filename])[0]
 
     actions = extract_actions(text_info)
+    actions = resolve_phrases(actions, text_info)
     actions = assemble_actions(text_info, actions)
     print("DONE")
 
