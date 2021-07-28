@@ -1,8 +1,9 @@
 import dataclasses
 from dataclasses import field
-from typing import List, Any, Tuple
+from typing import List, Any, Tuple, Dict
 from enum import Enum
 import re
+import itertools
 
 from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 
@@ -23,6 +24,7 @@ class Roles(Enum):
     ARGM_NEG = 'ARGM-NEG'
     ARGM_PRD = 'ARGM-PRD'
     ARGM_PRP = 'ARGM-PRP'
+    ARGM_ADV = 'ARGM-ADV'
     V = 'V'
 
 
@@ -53,18 +55,16 @@ class Position:
     start_word: int = 0
     end_word: int = 0
     start_symbol: int = 0
-    _end_symbol: int = 0
+    end_symbol: int = 0
 
     def words(self):
         return self.end_word - self.start_word
 
-    @property
-    def end_symbol(self) -> int:
-        return self._end_symbol
+    def set_end_symbol(self, text: str) -> None:
+        self.end_symbol = self.start_symbol + len(text) + 1
 
-    @end_symbol.setter
-    def end_symbol(self, text: str) -> None:
-        self._end_symbol = self.start_symbol + len(text) + 1
+    def get_dict_key(self):
+        return self.sentence_number, self.start_symbol, self.end_symbol
 
 
 @dataclasses.dataclass
@@ -96,7 +96,7 @@ class Action:
     Contains information for action sign
     Roles, objects, children Actions
     """
-    text: str
+    text: str = ""
     position: Position = Position()
     roles: List[Obj] = field(default_factory=list)
     actions: List[Any] = field(default_factory=list)
@@ -105,8 +105,11 @@ class Action:
     def add_obj(self, obj: Obj) -> None:
         self.roles.append(obj)
 
+    def add_action(self, action: Any) -> None:
+        self.actions.append(action)
 
-def process_action(action_info, pos_list, words, sentence_number):
+
+def process_action(action_info, pos_list, words, sentence_number) -> Action:
     # regex patterns to deal with BIO notation
     start_arg = re.compile("(B)-(.*)")
     inside_arg = re.compile("(I)-(.*)")
@@ -142,32 +145,59 @@ def process_action(action_info, pos_list, words, sentence_number):
                 i += 1
                 position.end_word = i
 
-            position.end_symbol(text)
+            position.set_end_symbol(text)
 
             # add info to verb or role
             if Roles(argument_type) == Roles.V:
                 action.position = position
             else:
-                role = Obj(text=text,
-                           position=position,
-                           arg_type=Roles(argument_type))
-                role.set_part_of_speech()
-                action.add_obj(role)
+                obj = Obj(text=text,
+                          position=position,
+                          arg_type=Roles(argument_type))
+                obj.set_part_of_speech(pos_list=pos_list)
+                action.add_obj(obj=obj)
         else:
             current_symbol += len(words[i]) + 1
             i += 1
     return action
 
 
-def extract_semantic_roles(sentence_info, sentence_number):
-    semantic_roles = []
-    for action_info in sentence_info['semantic_roles']['verbs']:
-        action = process_action(action_info=action_info,
-                                pos_list=sentence_info['dependency']['pos'],
-                                words=sentence_info['semantic_roles']['words'],
-                                sentence_number=sentence_number)
-        semantic_roles.append(action)
-    return semantic_roles
+def extract_actions(text_info):
+    actions: List[Action] = []
+    for i, sentence_info in enumerate(text_info['sentences_info']):
+        for action_info in sentence_info['semantic_roles']['verbs']:
+            action = process_action(action_info=action_info,
+                                    pos_list=sentence_info['dependency']['pos'],
+                                    words=sentence_info['semantic_roles']['words'],
+                                    sentence_number=i)
+            actions.append(action)
+    return actions
+
+
+def assemble_actions(text_info: Dict[str, Any],
+                     actions: List[Action]) -> List[Action]:
+    actions_dict = {action.position.get_dict_key(): action for action in actions}
+
+    root_list: List[Action] = [Action() for _ in range(len(text_info['sentences_info']))]
+
+    for i, sentence_info in enumerate(text_info['sentences_info']):
+        find_actions(sentence_number=i,
+                     node=sentence_info['dependency']['hierplane_tree']['root'],
+                     actions_dict=actions_dict,
+                     parent=root_list[i])
+
+    return list(itertools.chain(*[action.actions for action in root_list]))
+
+
+def find_actions(sentence_number, node: Dict[str, Any], actions_dict, parent: Action) -> None:
+    index = (sentence_number, node['spans'][0]['start'], node['spans'][0]['end'])
+    if index in actions_dict:
+        if parent is not None:
+            parent.add_action(actions_dict[index])
+        parent = actions_dict[index]
+    if 'children' in node:
+        for child in node['children']:
+            find_actions(sentence_number, child, actions_dict, parent)
 
 
 def example_usage():
@@ -175,9 +205,8 @@ def example_usage():
     filename = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/cinema.txt'
     text_info = extract_texts_info([filename])[0]
 
-    actions = []
-    for i, sentence_info in enumerate(text_info['sentences_info']):
-        actions += extract_semantic_roles(sentence_info, i)
+    actions = extract_actions(text_info)
+    actions = assemble_actions(text_info, actions)
     print("DONE")
 
 

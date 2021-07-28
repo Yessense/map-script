@@ -4,7 +4,7 @@ from mapcore.swm.src.components.semnet import Sign
 from mapcore.swm.src.components.semnet import CausalMatrix
 
 from src.script_extraction.text_preprocessing.extract_clusters import extract_clusters
-from src.script_extraction.text_preprocessing.extract_semantic_roles import extract_semantic_roles
+from src.script_extraction.text_preprocessing.extract_semantic_roles import extract_actions
 from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 from src.script_extraction.text_preprocessing.role import Role
 
@@ -28,7 +28,7 @@ def create_script_sign(text_info: Dict[str, Any]):
     # extract roles
     verbs: List[Role] = []
     for sentence_number, sentence_info in enumerate(text_info['sentences_info']):
-        verbs += extract_semantic_roles(sentence_info, sentence_number)
+        verbs += extract_actions(sentence_info, sentence_number)
 
     for verb in verbs:
         if verb.text not in actions_signs:
