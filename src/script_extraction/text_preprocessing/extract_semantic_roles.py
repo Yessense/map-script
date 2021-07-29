@@ -1,11 +1,14 @@
 import dataclasses
 from dataclasses import field
-from typing import List, Any, Tuple, Dict
+from typing import List, Any, Tuple, Dict, Set
 from enum import Enum
 import re
 import itertools
 from nltk.stem.wordnet import WordNetLemmatizer
+
 lemmatizer = WordNetLemmatizer()
+from nltk.corpus import wordnet as wn  # type:
+from nltk.wsd import lesk
 
 from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 
@@ -88,6 +91,12 @@ class Image:
     def index(self) -> str:
         return str((self.position.sentence_number, self.position.start_symbol, self.position.end_symbol))
 
+    def lemma(self) -> str:
+        pos = {POS.ADJ : 'a', POS.ADV : 'r', POS.NOUN: 'n'}
+        if self.pos in pos:
+            return lemmatizer.lemmatize(self.text, pos[self.pos])
+        else:
+            return lemmatizer.lemmatize(self.text)
 
 @dataclasses.dataclass
 class Obj:
@@ -100,13 +109,21 @@ class Obj:
     arg_type: Roles
     pos: POS = POS.PHRASE
     images: List[Image] = field(default_factory=list)
+    hypernyms: Set[str] = field(default_factory=set)
 
     def set_part_of_speech(self, pos_list):
-        if self.position == 1:
+        if self.position.words() == 1:
             self.pos = POS(pos_list[self.position.start_word])
 
     def index(self) -> str:
         return str((self.position.sentence_number, self.position.start_symbol, self.position.end_symbol))
+
+    def lemma(self) -> str:
+        pos = {POS.ADJ : 'a', POS.ADV : 'r', POS.NOUN: 'n'}
+        if self.pos in pos:
+            return lemmatizer.lemmatize(self.text, pos[self.pos])
+        else:
+            return lemmatizer.lemmatize(self.text)
 
 
 @dataclasses.dataclass
@@ -176,7 +193,7 @@ def process_action(action_info, pos_list, words, sentence_number) -> Action:
             if Roles(argument_type) == Roles.V:
                 action.position = position
             else:
-                obj = Obj(text=text,
+                obj = Obj(text=text.lower(),
                           position=position,
                           arg_type=Roles(argument_type))
                 obj.set_part_of_speech(pos_list=pos_list)
@@ -187,11 +204,16 @@ def process_action(action_info, pos_list, words, sentence_number) -> Action:
     return action
 
 
-def add_hypernims(actions: List[Action]):
-    for action in actions:
-        for obj in action.objects:
-
-
+def add_hypernims(actions: List[Action], text_info: Dict[str, Any]):
+    # allowed_pos_types = {'NOUN': 'n', 'ADJ': 'a', 'ADV': 'r'}
+    # for action in actions:
+    #     for obj in action.objects:
+    #         if obj.pos.value in allowed_pos_types:
+    #             sent = text_info['sentences_info'][action.position.sentence_number]['semantic_roles']['words']
+    #             ss = lesk(sent, obj.text)
+    #             for hypernym in ss.hypernyms():
+    #                 obj.hypernyms.update(hypernym.lemma_names())
+    return actions
 
 
 def extract_actions(text_info):
@@ -204,7 +226,7 @@ def extract_actions(text_info):
                                     sentence_number=i)
             actions.append(action)
     actions = resolve_phrases(actions, text_info)
-    actions = add_hypernims(actions)
+    actions = add_hypernims(actions, text_info)
     actions = assemble_actions(text_info, actions)
     return actions
 
@@ -240,8 +262,8 @@ def find_actions(sentence_number, node: Dict[str, Any], actions_dict, parent: Ac
 
 def is_accepted(image: Image):
     """Check candidate"""
-    restricted_pos = {POS.PUNCT, POS.CCONJ}
-    return image.pos not in restricted_pos
+    RESTRICTED_POS = {POS.PUNCT, POS.CCONJ, POS.DET, POS.ADP, POS.VERB, POS.PART, POS.PHRASE}
+    return image.pos not in RESTRICTED_POS
 
 
 def select_from_candidates(candidates_for_obj: List[Tuple[int, Image]], min_level):
@@ -250,7 +272,8 @@ def select_from_candidates(candidates_for_obj: List[Tuple[int, Image]], min_leve
 
 
 def select_images(candidates_for_obj, new_obj, min_level):
-    images = [image for level, image in candidates_for_obj if image.position != new_obj.position] # and level == min_level]
+    images = [image for level, image in candidates_for_obj if
+              image.position != new_obj.position]  # and level == min_level]
     return images
 
 
@@ -262,16 +285,16 @@ def resolve_phrases(actions: List[Action], text_info: Dict[str, Any]):
                                     sentence_number=i))
 
     for action in actions:
-        for obj in action.objects:
+        for i, obj in enumerate(action.objects):
             if obj.pos == POS.PHRASE:
                 candidates_for_obj: List[Tuple[int, Image]] = [(level, image)
                                                                for level, image in
                                                                trees_list[obj.position.sentence_number]
-                                                               if image.position.inside(obj.position) and is_accepted(
-                        image)]
+                                                               if image.position.inside(obj.position) and is_accepted(image)]
                 if not len(candidates_for_obj):
-                    del obj
+                    action.objects[i]=None
                     continue
+
                 min_level = min([level for level, image in candidates_for_obj])
                 # select candidate
                 new_obj: Image = select_from_candidates(candidates_for_obj, min_level)
@@ -285,7 +308,7 @@ def get_roots(node, sentence_number, words_list=None, level=0) -> List[Tuple]:
     if words_list is None:
         words_list = []
     words_list.append((level,
-                       Image(text=node['word'],
+                       Image(text=node['word'].lower(),
                              pos=POS(node['attributes'][0]),
                              position=Position(start_symbol=node['spans'][0]['start'],
                                                end_symbol=node['spans'][0]['end'],

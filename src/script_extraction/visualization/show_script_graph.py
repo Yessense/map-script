@@ -42,7 +42,7 @@ def add_object_edges(net: Network, action: Sign):
             role_sign: Sign = connector.out_sign
             label: str = role_sign.name
             obj_sign: Sign = next(iter(role_sign.significances[out_index].cause[0].coincidences)).out_sign
-            net.add_edge(str(hash(cm)), str(hash(obj_sign) + 2), label=label)
+            net.add_edge(str(hash(action) + 1), str(hash(obj_sign) + 2), label=label)
 
 
 def show_script_graph(S: Sign,
@@ -52,12 +52,12 @@ def show_script_graph(S: Sign,
                       images_signs: Dict[str, Sign]) -> None:
     net = Network(height='100%', width='100%')
 
-    net.add_node(str(S.__hash__()), label=S.name, color='#F24726', size=20)
-    add_nodes(net, actions_signs, color='#2D9BF0', size=17, add_signifs=True, add_value=1)
+    # net.add_node(str(S.__hash__()), label=S.name, color='#F24726', size=20)
+    add_nodes(net, actions_signs, color='#2D9BF0', size=17, add_value=1)
     add_nodes(net, objects_signs, color="#808080", size=14, add_value=2)
     add_nodes(net, images_signs, color="#FEF445", size=10, add_value=3)
 
-    add_script_edges(net, S)
+    # add_script_edges(net, S)
 
     for action in actions_signs.values():
         add_object_edges(net, action)

@@ -33,7 +33,7 @@ def add_obj_sign(obj: Obj,
     roles_signs[obj.arg_type.value].add_out_significance(connector)
 
     # add object
-    obj_name = obj.text
+    obj_name = obj.lemma()
     if obj_name not in objects_signs:
         objects_signs[obj_name] = Sign(obj_name)
         objects_signs[obj_name].add_significance()
