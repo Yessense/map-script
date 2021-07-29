@@ -52,6 +52,8 @@ class POS(Enum):
 
     def __lt__(self, other):
         if self.__class__ is other.__class__:
+            if self.value is self.NOUN and other.value is not POS.NOUN:
+                return True
             return self.value < other.value
         return NotImplemented
 
@@ -185,6 +187,13 @@ def process_action(action_info, pos_list, words, sentence_number) -> Action:
     return action
 
 
+def add_hypernims(actions: List[Action]):
+    for action in actions:
+        for obj in action.objects:
+
+
+
+
 def extract_actions(text_info):
     actions: List[Action] = []
     for i, sentence_info in enumerate(text_info['sentences_info']):
@@ -195,6 +204,7 @@ def extract_actions(text_info):
                                     sentence_number=i)
             actions.append(action)
     actions = resolve_phrases(actions, text_info)
+    actions = add_hypernims(actions)
     actions = assemble_actions(text_info, actions)
     return actions
 
@@ -231,7 +241,7 @@ def find_actions(sentence_number, node: Dict[str, Any], actions_dict, parent: Ac
 def is_accepted(image: Image):
     """Check candidate"""
     restricted_pos = {POS.PUNCT, POS.CCONJ}
-    return image.pos is not POS.PUNCT
+    return image.pos not in restricted_pos
 
 
 def select_from_candidates(candidates_for_obj: List[Tuple[int, Image]], min_level):
@@ -240,7 +250,7 @@ def select_from_candidates(candidates_for_obj: List[Tuple[int, Image]], min_leve
 
 
 def select_images(candidates_for_obj, new_obj, min_level):
-    images = [image for level, image in candidates_for_obj if image.position != new_obj.position]
+    images = [image for level, image in candidates_for_obj if image.position != new_obj.position] # and level == min_level]
     return images
 
 
@@ -259,7 +269,11 @@ def resolve_phrases(actions: List[Action], text_info: Dict[str, Any]):
                                                                trees_list[obj.position.sentence_number]
                                                                if image.position.inside(obj.position) and is_accepted(
                         image)]
+                if not len(candidates_for_obj):
+                    del obj
+                    continue
                 min_level = min([level for level, image in candidates_for_obj])
+                # select candidate
                 new_obj: Image = select_from_candidates(candidates_for_obj, min_level)
                 obj.pos = new_obj.pos
                 obj.text = new_obj.text
@@ -288,8 +302,6 @@ def example_usage():
     text_info = extract_texts_info([filename])[0]
 
     actions = extract_actions(text_info)
-    actions = resolve_phrases(actions, text_info)
-    actions = assemble_actions(text_info, actions)
     print("DONE")
 
 

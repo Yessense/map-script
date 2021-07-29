@@ -7,18 +7,19 @@ from pyvis.network import Network
 from src.script_extraction.text_preprocessing.extract_clusters import extract_clusters
 from src.script_extraction.text_preprocessing.extract_semantic_roles import extract_actions, Action, Obj, Roles, Image
 from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
+from src.script_extraction.visualization.show_script_graph import show_script_graph
 
 
 def add_image_sign(image: Image,
-                   obj_significance: CausalMatrix,
+                   obj_meaning: CausalMatrix,
                    images_signs: Dict[str, Sign]):
     image_name = image.text
     if image_name not in images_signs:
         images_signs[image_name] = Sign(image_name)
         images_signs[image_name].add_significance()
-    image_significance = images_signs[image_name].significances[1]
-    connector = obj_significance.add_feature(image_significance)
-    images_signs[image_name].add_out_significance(connector)
+    image_signinficances = images_signs[image_name].significances[1]
+    connector = obj_meaning.add_feature(image_signinficances)
+    images_signs[image_name].add_out_meaning(connector)
 
 
 def add_obj_sign(obj: Obj,
@@ -28,7 +29,7 @@ def add_obj_sign(obj: Obj,
                  images_signs: Dict[str, Sign]):
     # add role
     role_significance: CausalMatrix = roles_signs[obj.arg_type.value].add_significance()
-    connector: Connector = action_significance.add_feature(role_significance, zero_out=True)
+    connector: Connector = action_significance.add_feature(role_significance, zero_out=False)
     roles_signs[obj.arg_type.value].add_out_significance(connector)
 
     # add object
@@ -36,19 +37,13 @@ def add_obj_sign(obj: Obj,
     if obj_name not in objects_signs:
         objects_signs[obj_name] = Sign(obj_name)
         objects_signs[obj_name].add_significance()
+        objects_signs[obj_name].add_meaning()
     obj_significance = objects_signs[obj_name].significances[1]
-    connector=role_significance.add_feature(obj_significance, zero_out=True)
+    connector = role_significance.add_feature(obj_significance, zero_out=True)
     objects_signs[obj_name].add_out_significance(connector)
 
     for image in obj.images:
-        add_image_sign(image, obj_significance, images_signs)
-
-
-
-
-
-
-
+        add_image_sign(image, objects_signs[obj_name].meanings[1], images_signs)
 
 
 def add_action_sign(action: Action,
@@ -82,20 +77,20 @@ def add_action_sign(action: Action,
 def add_role_sign(role, roles_signs):
     roles_signs[role] = Sign(role)
 
+
 def create_script_sign(text_info: Dict[str, Any]):
     script_name = "Script"
     S = Sign(script_name)
 
     actions_signs: Dict[str, Sign] = {}
     roles_signs: Dict[str, Sign] = {}
-    objects_signs : Dict[str, Sign] = {}
-    images_signs : Dict[str, Sign] = {}
+    objects_signs: Dict[str, Sign] = {}
+    images_signs: Dict[str, Sign] = {}
 
     significances: Dict[str, CausalMatrix] = {}
     significances[script_name] = S.add_significance()
 
     for role in Roles:
-        print(role.value)
         add_role_sign(role.value, roles_signs)
     actions = extract_actions(text_info)
     for action in actions:
@@ -107,7 +102,8 @@ def create_script_sign(text_info: Dict[str, Any]):
                         roles_signs=roles_signs,
                         images_signs=images_signs)
 
-    show_graph(actions)
+    show_script_graph(S, actions_signs, objects_signs, roles_signs, images_signs)
+    # show_graph(actions)
 
     print("Done")
 
