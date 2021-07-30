@@ -13,6 +13,7 @@ from nltk.wsd import lesk
 from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 
 
+
 class Roles(Enum):
     ARG0 = 'ARG0'
     ARG1 = 'ARG1'
@@ -30,6 +31,13 @@ class Roles(Enum):
     ARGM_PRD = 'ARGM-PRD'
     ARGM_PRP = 'ARGM-PRP'
     ARGM_ADV = 'ARGM-ADV'
+    R_ARGM_TMP = 'R-ARGM-TMP'
+    ARGM_GOL = 'ARGM-GOL'
+    C_ARG1 = 'C-ARG1'
+    R_ARG0 = 'R-ARG0'
+    ARGM_CAU = 'ARGM-CAU'
+    ARGM_REC = 'ARGM-REC'
+    R_ARG1 = 'R-ARG1'
     V = 'V'
 
 
@@ -61,6 +69,7 @@ class POS(Enum):
         return NotImplemented
 
 
+RESTRICTED_POS = {POS.PUNCT, POS.CCONJ, POS.DET, POS.ADP, POS.VERB, POS.PART}
 @dataclasses.dataclass
 class Position:
     sentence_number: int = 0
@@ -119,7 +128,7 @@ class Obj:
         return str((self.position.sentence_number, self.position.start_symbol, self.position.end_symbol))
 
     def lemma(self) -> str:
-        pos = {POS.ADJ : 'a', POS.ADV : 'r', POS.NOUN: 'n'}
+        pos = {POS.ADJ : 'a', POS.ADV : 'r', POS.NOUN: 'n', POS.VERB: 'v'}
         if self.pos in pos:
             return lemmatizer.lemmatize(self.text, pos[self.pos])
         else:
@@ -197,7 +206,8 @@ def process_action(action_info, pos_list, words, sentence_number) -> Action:
                           position=position,
                           arg_type=Roles(argument_type))
                 obj.set_part_of_speech(pos_list=pos_list)
-                action.add_obj(obj=obj)
+                if obj.pos not in RESTRICTED_POS:
+                    action.add_obj(obj=obj)
         else:
             current_symbol += len(words[i]) + 1
             i += 1
@@ -262,7 +272,6 @@ def find_actions(sentence_number, node: Dict[str, Any], actions_dict, parent: Ac
 
 def is_accepted(image: Image):
     """Check candidate"""
-    RESTRICTED_POS = {POS.PUNCT, POS.CCONJ, POS.DET, POS.ADP, POS.VERB, POS.PART, POS.PHRASE}
     return image.pos not in RESTRICTED_POS
 
 
@@ -284,7 +293,7 @@ def resolve_phrases(actions: List[Action], text_info: Dict[str, Any]):
         trees_list.append(get_roots(sentence_info['dependency']['hierplane_tree']['root'],
                                     sentence_number=i))
 
-    for action in actions:
+    for action_index, action in enumerate(actions):
         for i, obj in enumerate(action.objects):
             if obj.pos == POS.PHRASE:
                 candidates_for_obj: List[Tuple[int, Image]] = [(level, image)
@@ -292,7 +301,7 @@ def resolve_phrases(actions: List[Action], text_info: Dict[str, Any]):
                                                                trees_list[obj.position.sentence_number]
                                                                if image.position.inside(obj.position) and is_accepted(image)]
                 if not len(candidates_for_obj):
-                    action.objects[i]=None
+                    obj = None
                     continue
 
                 min_level = min([level for level, image in candidates_for_obj])
@@ -301,6 +310,7 @@ def resolve_phrases(actions: List[Action], text_info: Dict[str, Any]):
                 obj.pos = new_obj.pos
                 obj.text = new_obj.text
                 obj.images = select_images(candidates_for_obj, new_obj, min_level)
+        action.objects = [obj for obj in action.objects if obj is not None]
     return actions
 
 
@@ -321,7 +331,7 @@ def get_roots(node, sentence_number, words_list=None, level=0) -> List[Tuple]:
 
 def example_usage():
     # text_info
-    filename = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/cinema.txt'
+    filename = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt'
     text_info = extract_texts_info([filename])[0]
 
     actions = extract_actions(text_info)
