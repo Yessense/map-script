@@ -111,7 +111,7 @@ def create_script_sign(text_info: Dict[str, Any]):
 
 
 def example_usage():
-    filename = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/cinema.txt'
+    filename = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt'
     text_info = extract_texts_info([filename])[0]
 
     create_script_sign(text_info)
