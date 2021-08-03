@@ -148,7 +148,7 @@ def extract_texts_info(files=None, saved_files_dir: str = None) -> List[Dict]:
 
 
 def example_usage() -> None:
-    FILE_NAME = "/texts/temp/restaurant.txt"
+    FILE_NAME = "/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/cinema.txt"
     files = [FILE_NAME]
     texts_info = extract_texts_info(files)
 

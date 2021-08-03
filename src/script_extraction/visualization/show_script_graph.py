@@ -18,23 +18,13 @@ def add_nodes(net: Network,
                 net.add_edge(str(hash(s) + add_value), str(hash(cm)))
 
 
-def add_script_edges(net: Network,
-                     S: Sign):
-    for cause in S.significances[1].cause:
-        connector: Connector = next(iter(cause.coincidences))
-        to: Sign = connector.out_sign
-        label = cause.order
-
-        net.add_edge(str(S.__hash__()), str(to.__hash__() + 1), label=label)
-
-
-def add_image_edges(net: Network, obj: Sign):
+def add_image_edges(net: Network, obj: Sign) -> None:
     for cause in obj.meanings[1].cause:
         image: Sign = next(iter(cause.coincidences)).out_sign
         net.add_edge(str(hash(obj) + 2), str(hash(image) + 3))
 
 
-def add_object_edges(net: Network, action: Sign):
+def add_object_edges(net: Network, action: Sign) -> None:
     for cm in action.significances.values():
         for cause in cm.cause:
             connector: Connector = next(iter(cause.coincidences))
@@ -43,6 +33,16 @@ def add_object_edges(net: Network, action: Sign):
             label: str = role_sign.name
             obj_sign: Sign = next(iter(role_sign.significances[out_index].cause[0].coincidences)).out_sign
             net.add_edge(str(hash(action) + 1), str(hash(obj_sign) + 2), label=label)
+
+
+def add_script_edges(net: Network,
+                     S: Sign) -> None:
+    for cause in S.significances[1].cause:
+        connector: Connector = next(iter(cause.coincidences))
+        to: Sign = connector.out_sign
+        label = cause.order
+
+        net.add_edge(str(S.__hash__()), str(to.__hash__() + 1), label=label)
 
 
 def show_script_graph(S: Sign,

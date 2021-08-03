@@ -13,7 +13,6 @@ from nltk.wsd import lesk
 from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 
 
-
 class Roles(Enum):
     ARG0 = 'ARG0'
     ARG1 = 'ARG1'
@@ -61,6 +60,8 @@ class POS(Enum):
     X = 'X'  # other
     PHRASE = 'PHRASE'
 
+    # Требуется при сравнении и выборе слова из дерева
+    # для разбора фразы
     def __lt__(self, other):
         if self.__class__ is other.__class__:
             if self.value is self.NOUN and other.value is not POS.NOUN:
@@ -69,30 +70,69 @@ class POS(Enum):
         return NotImplemented
 
 
+# Запрещенные части речи для заполнения роли.
 RESTRICTED_POS = {POS.PUNCT, POS.CCONJ, POS.DET, POS.ADP, POS.VERB, POS.PART}
+
+
 @dataclasses.dataclass
 class Position:
+    """
+    Position of word or phrase in text
+    """
     sentence_number: int = 0
     start_word: int = 0
     end_word: int = 0
     start_symbol: int = 0
     end_symbol: int = 0
 
-    def words(self):
+    @property
+    def words(self) -> int:
+        """
+        Number of words on this position
+        Returns
+        -------
+        out : int
+            number of words in sentence
+
+        """
         return self.end_word - self.start_word
 
     def set_end_symbol(self, text: str) -> None:
         self.end_symbol = self.start_symbol + len(text) + 1
 
-    def get_dict_key(self):
+    def get_dict_key(self) -> Tuple[int, int, int]:
+        """
+        Create dict key, based on position
+        Returns
+
+        -------
+        out : Tuple[int, int, int]
+        """
         return self.sentence_number, self.start_symbol, self.end_symbol
 
-    def inside(self, position: Any):
+    def inside(self, position: Any) -> bool:
+        """
+        Check if position is inside other position
+
+        Parameters
+        ----------
+        position: Position
+
+        Returns
+        -------
+        out : bool
+            True if inside, False otherwise
+
+        """
+
         return self.start_symbol >= position.start_symbol and self.end_symbol <= position.end_symbol
 
 
 @dataclasses.dataclass
 class Image:
+    """
+    This class represent Image for Role
+    """
     pos: POS
     position: Position
     text: str
@@ -101,11 +141,12 @@ class Image:
         return str((self.position.sentence_number, self.position.start_symbol, self.position.end_symbol))
 
     def lemma(self) -> str:
-        pos = {POS.ADJ : 'a', POS.ADV : 'r', POS.NOUN: 'n'}
+        pos = {POS.ADJ: 'a', POS.ADV: 'r', POS.NOUN: 'n'}
         if self.pos in pos:
             return lemmatizer.lemmatize(self.text, pos[self.pos])
         else:
             return lemmatizer.lemmatize(self.text)
+
 
 @dataclasses.dataclass
 class Obj:
@@ -121,14 +162,14 @@ class Obj:
     hypernyms: Set[str] = field(default_factory=set)
 
     def set_part_of_speech(self, pos_list):
-        if self.position.words() == 1:
+        if self.position.words == 1:
             self.pos = POS(pos_list[self.position.start_word])
 
     def index(self) -> str:
         return str((self.position.sentence_number, self.position.start_symbol, self.position.end_symbol))
 
     def lemma(self) -> str:
-        pos = {POS.ADJ : 'a', POS.ADV : 'r', POS.NOUN: 'n', POS.VERB: 'v'}
+        pos = {POS.ADJ: 'a', POS.ADV: 'r', POS.NOUN: 'n', POS.VERB: 'v'}
         if self.pos in pos:
             return lemmatizer.lemmatize(self.text, pos[self.pos])
         else:
@@ -160,7 +201,8 @@ class Action:
         return lemmatizer.lemmatize(self.text, 'v')
 
 
-def process_action(action_info, pos_list, words, sentence_number) -> Action:
+def process_action(action_info : Dict, pos_list: List,
+                   words: List[str], sentence_number: int) -> Action:
     # regex patterns to deal with BIO notation
     start_arg = re.compile("(B)-(.*)")
     inside_arg = re.compile("(I)-(.*)")
@@ -168,6 +210,7 @@ def process_action(action_info, pos_list, words, sentence_number) -> Action:
     # action to add roles
     action: Action = Action(text=action_info['verb'])
 
+    # sliding over sentence and finding arguments
     i: int = 0
     sentence_len = len(action_info['tags'])
     current_symbol = 0
@@ -198,7 +241,7 @@ def process_action(action_info, pos_list, words, sentence_number) -> Action:
 
             position.set_end_symbol(text)
 
-            # add info to verb or role
+            # add founded info to verb or role
             if Roles(argument_type) == Roles.V:
                 action.position = position
             else:
@@ -206,7 +249,7 @@ def process_action(action_info, pos_list, words, sentence_number) -> Action:
                           position=position,
                           arg_type=Roles(argument_type))
                 obj.set_part_of_speech(pos_list=pos_list)
-                if obj.pos not in RESTRICTED_POS:
+                if is_accepted(obj.pos):
                     action.add_obj(obj=obj)
         else:
             current_symbol += len(words[i]) + 1
@@ -270,9 +313,9 @@ def find_actions(sentence_number, node: Dict[str, Any], actions_dict, parent: Ac
             find_actions(sentence_number, child, actions_dict, parent)
 
 
-def is_accepted(image: Image):
-    """Check candidate"""
-    return image.pos not in RESTRICTED_POS
+def is_accepted(pos: POS):
+    """Check pos  candidate"""
+    return pos not in RESTRICTED_POS
 
 
 def select_from_candidates(candidates_for_obj: List[Tuple[int, Image]], min_level):
@@ -299,7 +342,8 @@ def resolve_phrases(actions: List[Action], text_info: Dict[str, Any]):
                 candidates_for_obj: List[Tuple[int, Image]] = [(level, image)
                                                                for level, image in
                                                                trees_list[obj.position.sentence_number]
-                                                               if image.position.inside(obj.position) and is_accepted(image)]
+                                                               if image.position.inside(obj.position) and is_accepted(
+                        image.pos)]
                 if not len(candidates_for_obj):
                     obj = None
                     continue
