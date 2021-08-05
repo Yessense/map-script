@@ -171,10 +171,29 @@ class Action(WordsObject):
     Roles, objects, children Actions
     """
     objects: List[Obj] = field(default_factory=list)
+    actions: List[Any] = field(default_factory=list)
 
     def add_obj(self, obj: Obj) -> None:
         self.objects.append(obj)
 
+
+@dataclass
+class Cluster:
+    named_group: List[WordsObject] = field(default_factory=list)
+
+    def add_words_object(self, words_object: WordsObject) -> None:
+        """
+
+        Parameters
+        ----------
+        words_object
+
+        Returns
+        -------
+        out: None
+
+        """
+        self.named_group.append(words_object)
 
 
 

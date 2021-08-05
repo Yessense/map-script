@@ -84,7 +84,19 @@ def add_hypernims(actions: List[Action], text_info: Dict[str, Any]):
     return actions
 
 
-def extract_actions(text_info):
+def extract_actions(text_info: Dict) -> List[Action]:
+    """
+    Extract actions from each sentence in text
+    and return list of actions
+    Parameters
+    ----------
+    text_info
+
+    Returns
+    -------
+    out: List[Action]
+
+    """
     actions: List[Action] = []
     for i, sentence_info in enumerate(text_info['sentences_info']):
         for action_info in sentence_info['semantic_roles']['verbs']:
@@ -94,13 +106,24 @@ def extract_actions(text_info):
                                     sentence_number=i)
             actions.append(action)
     actions = resolve_phrases(actions, text_info)
-    actions = add_hypernims(actions, text_info)
+    # actions = add_hypernims(actions, text_info)
     # actions = assemble_actions(text_info, actions)
     return actions
 
 
 def assemble_actions(text_info: Dict[str, Any],
                      actions: List[Action]) -> List[Action]:
+    """
+    Create tree from actions according to syntax tree
+    Parameters
+    ----------
+    text_info: Dict[str, Any]
+    actions: List[Action]
+
+    Returns
+    out -> List[Action]
+
+    """
     actions_dict = {action.index: action for action in actions}
 
     root_list: List[Action] = [Action() for _ in range(len(text_info['sentences_info']))]
