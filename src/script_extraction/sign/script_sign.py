@@ -6,8 +6,9 @@ from pyvis.network import Network
 
 from src.script_extraction.text_preprocessing.extract_clusters import extract_clusters
 from src.script_extraction.text_preprocessing.extract_semantic_roles import extract_actions, Action, Obj, Roles, Image
-from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
+# from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 from src.script_extraction.visualization.show_script_graph import show_script_graph
+from src.text_info_cinema import create_text_info_cinema
 
 
 def add_image_sign(image: Image,
@@ -112,7 +113,8 @@ def create_script_sign(text_info: Dict[str, Any]):
 
 def example_usage():
     filename = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt'
-    text_info = extract_texts_info([filename])[0]
+    # text_info = text_info_cinema([filename])[0]
+    text_info = create_text_info_cinema()
 
     create_script_sign(text_info)
     print("Done")

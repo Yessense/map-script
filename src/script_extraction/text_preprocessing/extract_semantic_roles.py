@@ -6,200 +6,15 @@ import re
 import itertools
 from nltk.stem.wordnet import WordNetLemmatizer
 
+from src.script_extraction.text_preprocessing.words_object import Roles, POS, Action, Position, Obj, RESTRICTED_POS, \
+    WordsObject
+from src.text_info_cinema import create_text_info_cinema
+
 lemmatizer = WordNetLemmatizer()
 from nltk.corpus import wordnet as wn  # type:
 from nltk.wsd import lesk
 
-from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
-
-
-class Roles(Enum):
-    ARG0 = 'ARG0'
-    ARG1 = 'ARG1'
-    ARG2 = 'ARG2'
-    ARG3 = 'ARG3'
-    ARG4 = 'ARG4'
-    ARGM_TMP = 'ARGM-TMP'
-    ARGM_DIR = 'ARGM-DIR'
-    ARGM_DIS = 'ARGM-DIS'
-    ARGM_EXT = 'ARGM-EXT'
-    ARGM_LOC = 'ARGM-LOC'
-    ARGM_MNR = 'ARGM-MNR'
-    ARGM_MOD = 'ARGM-MOD'
-    ARGM_NEG = 'ARGM-NEG'
-    ARGM_PRD = 'ARGM-PRD'
-    ARGM_PRP = 'ARGM-PRP'
-    ARGM_ADV = 'ARGM-ADV'
-    R_ARGM_TMP = 'R-ARGM-TMP'
-    ARGM_GOL = 'ARGM-GOL'
-    C_ARG1 = 'C-ARG1'
-    R_ARG0 = 'R-ARG0'
-    ARGM_CAU = 'ARGM-CAU'
-    ARGM_REC = 'ARGM-REC'
-    R_ARG1 = 'R-ARG1'
-    V = 'V'
-
-
-class POS(Enum):
-    ADJ = 'ADJ'  # adjective
-    ADP = 'ADP'  # adposition
-    ADV = 'ADV'  # adverb
-    AUX = 'AUX'  # auxiliary
-    CCONJ = 'CCONJ'  # coordinating conjunction
-    DET = 'DET'  # determiner
-    INTJ = 'INTJ'  # interjection
-    NOUN = 'NOUN'  # noun
-    NUM = 'NUM'  # numeral
-    PART = 'PART'  # particle
-    PRON = 'PRON'  # pronoun
-    PROPN = 'PROPN'  # proper noun
-    PUNCT = 'PUNCT'  # punctuation
-    SCONJ = 'SCONJ'  # subordinating conjunction
-    SYM = 'SYM'  # symbol
-    VERB = 'VERB'  # verb
-    X = 'X'  # other
-    PHRASE = 'PHRASE'
-
-    # Требуется при сравнении и выборе слова из дерева
-    # для разбора фразы
-    def __lt__(self, other):
-        if self.__class__ is other.__class__:
-            if self.value is self.NOUN and other.value is not POS.NOUN:
-                return True
-            return self.value < other.value
-        return NotImplemented
-
-
-# Запрещенные части речи для заполнения роли.
-RESTRICTED_POS = {POS.PUNCT, POS.CCONJ, POS.DET, POS.ADP, POS.VERB, POS.PART}
-
-
-@dataclasses.dataclass
-class Position:
-    """
-    Position of word or phrase in text
-    """
-    sentence_number: int = 0
-    start_word: int = 0
-    end_word: int = 0
-    start_symbol: int = 0
-    end_symbol: int = 0
-
-    @property
-    def words(self) -> int:
-        """
-        Number of words on this position
-        Returns
-        -------
-        out : int
-            number of words in sentence
-
-        """
-        return self.end_word - self.start_word
-
-    def set_end_symbol(self, text: str) -> None:
-        self.end_symbol = self.start_symbol + len(text) + 1
-
-    def get_dict_key(self) -> Tuple[int, int, int]:
-        """
-        Create dict key, based on position
-        Returns
-
-        -------
-        out : Tuple[int, int, int]
-        """
-        return self.sentence_number, self.start_symbol, self.end_symbol
-
-    def inside(self, position: Any) -> bool:
-        """
-        Check if position is inside other position
-
-        Parameters
-        ----------
-        position: Position
-
-        Returns
-        -------
-        out : bool
-            True if inside, False otherwise
-
-        """
-
-        return self.start_symbol >= position.start_symbol and self.end_symbol <= position.end_symbol
-
-
-@dataclasses.dataclass
-class Image:
-    """
-    This class represent Image for Role
-    """
-    pos: POS
-    position: Position
-    text: str
-
-    def index(self) -> str:
-        return str((self.position.sentence_number, self.position.start_symbol, self.position.end_symbol))
-
-    def lemma(self) -> str:
-        pos = {POS.ADJ: 'a', POS.ADV: 'r', POS.NOUN: 'n'}
-        if self.pos in pos:
-            return lemmatizer.lemmatize(self.text, pos[self.pos])
-        else:
-            return lemmatizer.lemmatize(self.text)
-
-
-@dataclasses.dataclass
-class Obj:
-    """
-    Contains information about object
-    role type, images
-    """
-    text: str
-    position: Position
-    arg_type: Roles
-    pos: POS = POS.PHRASE
-    images: List[Image] = field(default_factory=list)
-    hypernyms: Set[str] = field(default_factory=set)
-
-    def set_part_of_speech(self, pos_list):
-        if self.position.words == 1:
-            self.pos = POS(pos_list[self.position.start_word])
-
-    def index(self) -> str:
-        return str((self.position.sentence_number, self.position.start_symbol, self.position.end_symbol))
-
-    def lemma(self) -> str:
-        pos = {POS.ADJ: 'a', POS.ADV: 'r', POS.NOUN: 'n', POS.VERB: 'v'}
-        if self.pos in pos:
-            return lemmatizer.lemmatize(self.text, pos[self.pos])
-        else:
-            return lemmatizer.lemmatize(self.text)
-
-
-@dataclasses.dataclass
-class Action:
-    """
-    Contains information for action sign
-    Roles, objects, children Actions
-    """
-    text: str = ""
-    position: Position = Position()
-    objects: List[Obj] = field(default_factory=list)
-    actions: List[Any] = field(default_factory=list)
-    arg_type: Roles = Roles.V
-
-    def add_obj(self, obj: Obj) -> None:
-        self.objects.append(obj)
-
-    def add_action(self, action: Any) -> None:
-        self.actions.append(action)
-
-    def index(self) -> str:
-        return str((self.position.sentence_number, self.position.start_symbol, self.position.end_symbol))
-
-    def lemma(self) -> str:
-        return lemmatizer.lemmatize(self.text, 'v')
-
+# from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 
 def process_action(action_info : Dict, pos_list: List,
                    words: List[str], sentence_number: int) -> Action:
@@ -280,13 +95,13 @@ def extract_actions(text_info):
             actions.append(action)
     actions = resolve_phrases(actions, text_info)
     actions = add_hypernims(actions, text_info)
-    actions = assemble_actions(text_info, actions)
+    # actions = assemble_actions(text_info, actions)
     return actions
 
 
 def assemble_actions(text_info: Dict[str, Any],
                      actions: List[Action]) -> List[Action]:
-    actions_dict = {action.position.get_dict_key(): action for action in actions}
+    actions_dict = {action.index: action for action in actions}
 
     root_list: List[Action] = [Action() for _ in range(len(text_info['sentences_info']))]
 
@@ -318,7 +133,7 @@ def is_accepted(pos: POS):
     return pos not in RESTRICTED_POS
 
 
-def select_from_candidates(candidates_for_obj: List[Tuple[int, Image]], min_level):
+def select_from_candidates(candidates_for_obj: List[Tuple[int, WordsObject]], min_level):
     obj = sorted([image for level, image in candidates_for_obj if level == min_level], key=lambda x: x.pos)[0]
     return obj
 
@@ -339,7 +154,7 @@ def resolve_phrases(actions: List[Action], text_info: Dict[str, Any]):
     for action_index, action in enumerate(actions):
         for i, obj in enumerate(action.objects):
             if obj.pos == POS.PHRASE:
-                candidates_for_obj: List[Tuple[int, Image]] = [(level, image)
+                candidates_for_obj: List[Tuple[int, WordsObject]] = [(level, image)
                                                                for level, image in
                                                                trees_list[obj.position.sentence_number]
                                                                if image.position.inside(obj.position) and is_accepted(
@@ -350,7 +165,7 @@ def resolve_phrases(actions: List[Action], text_info: Dict[str, Any]):
 
                 min_level = min([level for level, image in candidates_for_obj])
                 # select candidate
-                new_obj: Image = select_from_candidates(candidates_for_obj, min_level)
+                new_obj: WordsObject = select_from_candidates(candidates_for_obj, min_level)
                 obj.pos = new_obj.pos
                 obj.text = new_obj.text
                 obj.images = select_images(candidates_for_obj, new_obj, min_level)
@@ -362,7 +177,7 @@ def get_roots(node, sentence_number, words_list=None, level=0) -> List[Tuple]:
     if words_list is None:
         words_list = []
     words_list.append((level,
-                       Image(text=node['word'].lower(),
+                       WordsObject(text=node['word'].lower(),
                              pos=POS(node['attributes'][0]),
                              position=Position(start_symbol=node['spans'][0]['start'],
                                                end_symbol=node['spans'][0]['end'],
@@ -376,7 +191,8 @@ def get_roots(node, sentence_number, words_list=None, level=0) -> List[Tuple]:
 def example_usage():
     # text_info
     filename = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt'
-    text_info = extract_texts_info([filename])[0]
+    # text_info = extract_texts_info([filename])[0]
+    text_info = create_text_info_cinema()
 
     actions = extract_actions(text_info)
     print("DONE")
