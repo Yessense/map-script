@@ -9,14 +9,16 @@ from nltk.stem.wordnet import WordNetLemmatizer
 from src.script_extraction.text_preprocessing.words_object import Roles, POS, Action, Position, Obj, RESTRICTED_POS, \
     WordsObject
 from src.text_info_cinema import create_text_info_cinema
+from src.text_info_restaurant import create_text_info_restaurant
 
 lemmatizer = WordNetLemmatizer()
 from nltk.corpus import wordnet as wn  # type:
 from nltk.wsd import lesk
 
+
 # from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 
-def process_action(action_info : Dict, pos_list: List,
+def process_action(action_info: Dict, sentences_info: List[Dict[str, Any]],
                    words: List[str], sentence_number: int) -> Action:
     # regex patterns to deal with BIO notation
     start_arg = re.compile("(B)-(.*)")
@@ -63,7 +65,7 @@ def process_action(action_info : Dict, pos_list: List,
                 obj = Obj(text=text.lower(),
                           position=position,
                           arg_type=Roles(argument_type))
-                obj.set_part_of_speech(pos_list=pos_list)
+                obj.set_part_of_speech(sentences_info=sentences_info)
                 if is_accepted(obj.pos):
                     action.add_obj(obj=obj)
         else:
@@ -101,14 +103,23 @@ def extract_actions(text_info: Dict) -> List[Action]:
     for i, sentence_info in enumerate(text_info['sentences_info']):
         for action_info in sentence_info['semantic_roles']['verbs']:
             action = process_action(action_info=action_info,
-                                    pos_list=sentence_info['dependency']['pos'],
+                                    sentences_info=text_info['sentences_info'],
                                     words=sentence_info['semantic_roles']['words'],
                                     sentence_number=i)
             actions.append(action)
-    actions = resolve_phrases(actions, text_info)
+    trees_list = get_trees_list(text_info)
+    resolve_phrases(actions, trees_list=trees_list)
     # actions = add_hypernims(actions, text_info)
     # actions = assemble_actions(text_info, actions)
     return actions
+
+
+def get_trees_list(text_info: Dict[str, Any]) -> List[List[Tuple[int, WordsObject]]]:
+    trees_list = []
+    for i, sentence_info in enumerate(text_info['sentences_info']):
+        trees_list.append(get_roots(sentence_info['dependency']['hierplane_tree']['root'],
+                                    sentence_number=i))
+    return trees_list
 
 
 def assemble_actions(text_info: Dict[str, Any],
@@ -156,9 +167,14 @@ def is_accepted(pos: POS):
     return pos not in RESTRICTED_POS
 
 
-def select_from_candidates(candidates_for_obj: List[Tuple[int, WordsObject]], min_level):
-    obj = sorted([image for level, image in candidates_for_obj if level == min_level], key=lambda x: x.pos)[0]
-    return obj
+def select_new_objects(candidates_for_obj: List[Tuple[int, WordsObject]],
+                       min_level: int,
+                       arg_type: Roles) -> List[Obj]:
+    objects = [Obj(text=words_obj.text,
+                   position=words_obj.position,
+                   pos=words_obj.pos,
+                   arg_type=arg_type) for level, words_obj in candidates_for_obj if level == min_level]
+    return objects
 
 
 def select_images(candidates_for_obj, new_obj, min_level):
@@ -167,31 +183,24 @@ def select_images(candidates_for_obj, new_obj, min_level):
     return images
 
 
-def resolve_phrases(actions: List[Action], text_info: Dict[str, Any]):
-    # convert trees to list
-    trees_list = []
-    for i, sentence_info in enumerate(text_info['sentences_info']):
-        trees_list.append(get_roots(sentence_info['dependency']['hierplane_tree']['root'],
-                                    sentence_number=i))
-
+def resolve_phrases(actions: List[Action],
+                    trees_list: List[List[Tuple[int, WordsObject]]]) -> List[Action]:
     for action_index, action in enumerate(actions):
         for i, obj in enumerate(action.objects):
             if obj.pos == POS.PHRASE:
                 candidates_for_obj: List[Tuple[int, WordsObject]] = [(level, image)
-                                                               for level, image in
-                                                               trees_list[obj.position.sentence_number]
-                                                               if image.position.inside(obj.position) and is_accepted(
+                                                                     for level, image in
+                                                                     trees_list[obj.position.sentence_number]
+                                                                     if image.position.inside(
+                        obj.position) and is_accepted(
                         image.pos)]
-                if not len(candidates_for_obj):
-                    obj = None
-                    continue
+                action.objects[i] = None
 
-                min_level = min([level for level, image in candidates_for_obj])
-                # select candidate
-                new_obj: WordsObject = select_from_candidates(candidates_for_obj, min_level)
-                obj.pos = new_obj.pos
-                obj.text = new_obj.text
-                obj.images = select_images(candidates_for_obj, new_obj, min_level)
+                if len(candidates_for_obj):
+                    min_level = min([level for level, image in candidates_for_obj])
+                    # create object list
+                    new_objects: List[WordsObject] = select_new_objects(candidates_for_obj, min_level, obj.arg_type)
+                    action.objects.extend(new_objects)
         action.objects = [obj for obj in action.objects if obj is not None]
     return actions
 
@@ -201,10 +210,10 @@ def get_roots(node, sentence_number, words_list=None, level=0) -> List[Tuple]:
         words_list = []
     words_list.append((level,
                        WordsObject(text=node['word'].lower(),
-                             pos=POS(node['attributes'][0]),
-                             position=Position(start_symbol=node['spans'][0]['start'],
-                                               end_symbol=node['spans'][0]['end'],
-                                               sentence_number=sentence_number))))
+                                   pos=POS(node['attributes'][0]),
+                                   position=Position(start_symbol=node['spans'][0]['start'],
+                                                     end_symbol=node['spans'][0]['end'],
+                                                     sentence_number=sentence_number))))
     if 'children' in node:
         for child in node['children']:
             get_roots(child, sentence_number, words_list, level + 1)
@@ -215,7 +224,12 @@ def example_usage():
     # text_info
     filename = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt'
     # text_info = extract_texts_info([filename])[0]
-    text_info = create_text_info_cinema()
+    text_info = create_text_info_restaurant()
+
+    trees_list = []
+    for i, sentence_info in enumerate(text_info['sentences_info']):
+        trees_list.append(get_roots(sentence_info['dependency']['hierplane_tree']['root'],
+                                    sentence_number=i))
 
     actions = extract_actions(text_info)
     print("DONE")

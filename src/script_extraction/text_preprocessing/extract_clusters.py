@@ -5,6 +5,7 @@ from typing import Dict, List, Any, Tuple
 
 from src.script_extraction.text_preprocessing.words_object import Cluster, WordsObject, Position
 from src.text_info_cinema import create_text_info_cinema
+from src.text_info_restaurant import create_text_info_restaurant
 
 
 def get_sentences_bounds(text_info: Dict) -> List[Tuple[int, int]]:
@@ -32,8 +33,20 @@ def get_sentences_bounds(text_info: Dict) -> List[Tuple[int, int]]:
 
 
 def extract_clusters(text_info: Dict) -> List[Cluster]:
-    sentences_bounds = get_sentences_bounds(text_info)
+    """
+    Collect info about clusters in one list
+    Parameters
+    ----------
+    text_info: Dict
+
+    Returns
+    -------
+    out: List[Cluster]
+
+    """
     clusters: List[Cluster] = []
+
+    sentences_bounds = get_sentences_bounds(text_info)
 
     for cluster_index, cluster_info in enumerate(text_info['coreferences']['clusters']):
         cluster = Cluster()
@@ -41,8 +54,8 @@ def extract_clusters(text_info: Dict) -> List[Cluster]:
             for sentence_number, sentence in enumerate(text_info['sentences_info']):
                 if (entry[1] < sentences_bounds[sentence_number][1]
                         and entry[0] >= sentences_bounds[sentence_number][0]):
-                    start_word = entry[0] - sentences_bounds[sentence_number][1]
-                    end_word = entry[1] - sentences_bounds[sentence_number][0]
+                    start_word = entry[0] - sentences_bounds[sentence_number][0]
+                    end_word = entry[1] - sentences_bounds[sentence_number][0] + 1
 
                     position = Position(sentence_number=sentence_number,
                                         start_word=start_word,
@@ -50,15 +63,16 @@ def extract_clusters(text_info: Dict) -> List[Cluster]:
                     words_object = WordsObject(position=position,
                                                text=" ".join(
                                                    text_info['coreferences']['document'][entry[0]:entry[1] + 1]))
+                    words_object.set_part_of_speech(sentences_info=text_info['sentences_info'])
+
                     cluster.add_words_object(words_object)
         clusters.append(cluster)
     return clusters
 
 
-
 def example_usage() -> None:
     # text_info
-    text_info = create_text_info_cinema()
+    text_info = create_text_info_restaurant()
     clusters = extract_clusters(text_info)
 
     # semantic_roles with coreferences

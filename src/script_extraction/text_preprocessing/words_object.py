@@ -1,9 +1,10 @@
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import Tuple, Any, List
+from typing import Tuple, Any, List, Dict
 from nltk.stem.wordnet import WordNetLemmatizer
 
 lemmatizer = WordNetLemmatizer()
+
 
 class Roles(Enum):
     """
@@ -74,7 +75,7 @@ class POS(Enum):
 RESTRICTED_POS = {POS.PUNCT, POS.CCONJ, POS.DET, POS.ADP, POS.VERB, POS.PART}
 
 # Part of speech mapping for lemmatizing
-POS_FOR_LEM = {POS.ADJ: 'a', POS.ADV: 'r', POS.NOUN: 'n'}
+POS_FOR_LEM = {POS.ADJ: 'a', POS.ADV: 'r', POS.NOUN: 'n', POS.VERB: 'v'}
 
 
 @dataclass
@@ -147,6 +148,12 @@ class WordsObject:
         else:
             return lemmatizer.lemmatize(self.text)
 
+    def set_part_of_speech(self, sentences_info: List[Dict[str, Any]]):
+        if self.position.words == 1:
+            self.pos = POS(sentences_info[self.position.sentence_number]['dependency']['pos'][self.position.start_word])
+        else:
+            self.pos = POS.PHRASE
+
 
 @dataclass
 class Obj(WordsObject):
@@ -158,11 +165,6 @@ class Obj(WordsObject):
     arg_type: Roles = Roles.NONE
     images: List[WordsObject] = field(default_factory=list)
 
-    def set_part_of_speech(self, pos_list):
-        if self.position.words == 1:
-            self.pos = POS(pos_list[self.position.start_word])
-        else:
-            self.pos = POS.PHRASE
 
 @dataclass
 class Action(WordsObject):
@@ -173,12 +175,18 @@ class Action(WordsObject):
     objects: List[Obj] = field(default_factory=list)
     actions: List[Any] = field(default_factory=list)
 
+    def __post_init__(self):
+        self.pos = POS.VERB
+
     def add_obj(self, obj: Obj) -> None:
         self.objects.append(obj)
 
 
 @dataclass
 class Cluster:
+    """
+    Contains all named group entities
+    """
     named_group: List[WordsObject] = field(default_factory=list)
 
     def add_words_object(self, words_object: WordsObject) -> None:
@@ -194,6 +202,3 @@ class Cluster:
 
         """
         self.named_group.append(words_object)
-
-
-
