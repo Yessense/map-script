@@ -6,8 +6,9 @@ import re
 import itertools
 from nltk.stem.wordnet import WordNetLemmatizer
 
+from src.script_extraction.text_preprocessing.resolve_phrases import get_trees_list, resolve_phrases
 from src.script_extraction.text_preprocessing.words_object import Roles, POS, Action, Position, Obj, RESTRICTED_POS, \
-    WordsObject, resolve_phrases, get_trees_list
+    WordsObject
 from src.text_info_cinema import create_text_info_cinema
 from src.text_info_restaurant import create_text_info_restaurant
 

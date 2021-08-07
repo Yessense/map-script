@@ -3,7 +3,8 @@ Add roles, clusters
 """
 from typing import Dict, List, Any, Tuple
 
-from src.script_extraction.text_preprocessing.words_object import Cluster, WordsObject, Position
+from src.script_extraction.text_preprocessing.resolve_phrases import resolve_phrases, get_trees_list
+from src.script_extraction.text_preprocessing.words_object import Cluster, WordsObject, Position, Obj, Roles
 from src.text_info_cinema import create_text_info_cinema
 from src.text_info_restaurant import create_text_info_restaurant
 
@@ -60,12 +61,12 @@ def extract_clusters(text_info: Dict) -> List[Cluster]:
                     position = Position(sentence_number=sentence_number,
                                         start_word=start_word,
                                         end_word=end_word)
-                    words_object = WordsObject(position=position,
-                                               text=" ".join(
-                                                   text_info['coreferences']['document'][entry[0]:entry[1] + 1]))
-                    words_object.set_part_of_speech(sentences_info=text_info['sentences_info'])
-
-                    cluster.add_words_object(words_object)
+                    obj = Obj(position=position,
+                              text=" ".join(
+                                  text_info['coreferences']['document'][entry[0]:entry[1] + 1]),
+                              arg_type=Roles.NAMED_GROUP)
+                    obj.set_part_of_speech(sentences_info=text_info['sentences_info'])
+                    cluster.add_obj(obj)
         clusters.append(cluster)
     return clusters
 
@@ -74,6 +75,9 @@ def example_usage() -> None:
     # text_info
     text_info = create_text_info_restaurant()
     clusters = extract_clusters(text_info)
+    trees_list = get_trees_list(text_info)
+
+    resolve_phrases(clusters, trees_list, text_info)
 
     # semantic_roles with coreferences
     print("DONE")
