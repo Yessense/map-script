@@ -1,10 +1,14 @@
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import Tuple, Any, List, Dict
+from typing import Tuple, Any, List, Dict, Union, Optional
 from nltk.stem.wordnet import WordNetLemmatizer
 
 lemmatizer = WordNetLemmatizer()
 
+
+# ----------------------------------------
+# Enums
+# ----------------------------------------
 
 class Roles(Enum):
     """
@@ -35,6 +39,7 @@ class Roles(Enum):
     R_ARG1 = 'R-ARG1'
     V = 'V'
     NONE = "NONE"
+    NAMED_GROUP = "NAMED-GROUP"
 
 
 class POS(Enum):
@@ -77,6 +82,10 @@ RESTRICTED_POS = {POS.PUNCT, POS.CCONJ, POS.DET, POS.ADP, POS.VERB, POS.PART}
 # Part of speech mapping for lemmatizing
 POS_FOR_LEM = {POS.ADJ: 'a', POS.ADV: 'r', POS.NOUN: 'n', POS.VERB: 'v'}
 
+
+# ----------------------------------------
+# Classes
+# ----------------------------------------
 
 @dataclass
 class Position:
@@ -154,6 +163,11 @@ class WordsObject:
         else:
             self.pos = POS.PHRASE
 
+    @property
+    def is_accepted(self) -> bool:
+        """Check pos  candidate"""
+        return self.pos not in RESTRICTED_POS
+
 
 @dataclass
 class Obj(WordsObject):
@@ -161,9 +175,8 @@ class Obj(WordsObject):
     Contains information about object
     role type, images
     """
-
     arg_type: Roles = Roles.NONE
-    images: List[WordsObject] = field(default_factory=list)
+    images: List[Any] = field(default_factory=list)
 
 
 @dataclass
@@ -173,7 +186,6 @@ class Action(WordsObject):
     Roles, objects, children Actions
     """
     objects: List[Obj] = field(default_factory=list)
-    actions: List[Any] = field(default_factory=list)
 
     def __post_init__(self):
         self.pos = POS.VERB
@@ -187,18 +199,10 @@ class Cluster:
     """
     Contains all named group entities
     """
-    named_group: List[WordsObject] = field(default_factory=list)
+    # named group
+    objects: List[Obj] = field(default_factory=list)
 
-    def add_words_object(self, words_object: WordsObject) -> None:
-        """
+    def add_obj(self, words_object: WordsObject) -> None:
+        self.objects.append(words_object)
 
-        Parameters
-        ----------
-        words_object
 
-        Returns
-        -------
-        out: None
-
-        """
-        self.named_group.append(words_object)
