@@ -62,6 +62,7 @@ def process_action(action_info: Dict, sentences_info: List[Dict[str, Any]],
             # add founded info to verb or role
             if Roles(argument_type) == Roles.V:
                 action.position = position
+                action.set_meaning(sentences_info)
             else:
                 obj = Obj(text=text.lower(),
                           position=position,

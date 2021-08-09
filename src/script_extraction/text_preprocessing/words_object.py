@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from typing import Tuple, Any, List, Dict, Union, Optional
 from nltk.stem.wordnet import WordNetLemmatizer
 
+from src.script_extraction.wn import get_meaning
+
 lemmatizer = WordNetLemmatizer()
 
 
@@ -78,7 +80,8 @@ class POS(Enum):
 
 # Restricted parts of speech for role filling
 RESTRICTED_POS = {POS.PUNCT, POS.CCONJ, POS.DET, POS.ADP, POS.VERB, POS.PART}
-
+# Allowed pronouns
+ALLOWED_PRON = {"i", "we"}
 # Part of speech mapping for lemmatizing
 POS_FOR_LEM = {POS.ADJ: 'a', POS.ADV: 'r', POS.NOUN: 'n', POS.VERB: 'v'}
 
@@ -143,6 +146,8 @@ class WordsObject:
     text: str = ""
     position: Position = Position()
     pos: POS = POS.NONE
+    _synsets_len: int = 1
+    _synset_number: int = 0
 
     @property
     def index(self) -> Tuple[int, int, int]:
@@ -167,6 +172,24 @@ class WordsObject:
     def is_accepted(self) -> bool:
         """Check pos  candidate"""
         return self.pos not in RESTRICTED_POS
+
+    def set_meaning(self, sentences_info: List[Dict[str, Any]]) -> None:
+        sentence = sentences_info[self.position.sentence_number]['semantic_roles']['words']
+
+        self._synsets_len, self._synset_number = get_meaning(sentence=sentence,
+                                                           lemma=self.lemma,
+                                                           pos=POS_FOR_LEM.get(self.pos, None))
+
+    @property
+    def synsets_len(self):
+        return self._synsets_len
+
+    @property
+    def synset_number(self):
+        return self._synset_number
+
+
+
 
 
 @dataclass
