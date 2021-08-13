@@ -61,13 +61,19 @@ def extract_clusters(text_info: Dict) -> List[Cluster]:
                     position = Position(sentence_number=sentence_number,
                                         start_word=start_word,
                                         end_word=end_word)
+
                     obj = Obj(position=position,
                               text=" ".join(
                                   text_info['coreferences']['document'][entry[0]:entry[1] + 1]),
                               arg_type=Roles.NAMED_GROUP)
                     obj.set_part_of_speech(sentences_info=text_info['sentences_info'])
-                    cluster.add_obj(obj)
+                    if obj.is_accepted:
+                        obj.position.set_symbols_bounds(sentence['semantic_roles']['words'])
+                        cluster.add_obj(obj)
         clusters.append(cluster)
+
+    trees_list = get_trees_list(text_info)
+    resolve_phrases(clusters, trees_list, text_info)
     return clusters
 
 

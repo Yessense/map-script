@@ -6,9 +6,10 @@ import re
 import itertools
 from nltk.stem.wordnet import WordNetLemmatizer
 
+from src.script_extraction.text_preprocessing.extract_clusters import extract_clusters
 from src.script_extraction.text_preprocessing.resolve_phrases import get_trees_list, resolve_phrases
-from src.script_extraction.text_preprocessing.words_object import Roles, POS, Action, Position, Obj, RESTRICTED_POS, \
-    WordsObject
+from src.script_extraction.text_preprocessing.words_object import Roles, POS, Action, Position, Obj,  \
+    WordsObject, Cluster
 from src.text_info_cinema import create_text_info_cinema
 from src.text_info_restaurant import create_text_info_restaurant
 
@@ -21,6 +22,21 @@ from nltk.wsd import lesk
 
 def process_action(action_info: Dict, sentences_info: List[Dict[str, Any]],
                    words: List[str], sentence_number: int) -> Action:
+    """
+    Create action and his object
+
+    Parameters
+    ----------
+    action_info
+    sentences_info
+    words
+    sentence_number
+
+    Returns
+    -------
+
+    """
+
     # regex patterns to deal with BIO notation
     start_arg = re.compile("(B)-(.*)")
     inside_arg = re.compile("(I)-(.*)")
@@ -55,14 +71,13 @@ def process_action(action_info: Dict, sentences_info: List[Dict[str, Any]],
 
                 current_symbol += len(words[i]) + 1
                 i += 1
-                position.end_word = i
 
+            position.end_word = i
             position.set_end_symbol(text)
 
             # add founded info to verb or role
             if Roles(argument_type) == Roles.V:
                 action.position = position
-                action.set_meaning(sentences_info)
             else:
                 obj = Obj(text=text.lower(),
                           position=position,
@@ -156,14 +171,43 @@ def find_actions(sentence_number, node: Dict[str, Any], actions_dict, parent: Ac
             find_actions(sentence_number, child, actions_dict, parent)
 
 
+def create_clusters_dict(clusters: List[Cluster]) -> Dict[Tuple[int, int, int], Cluster]:
+    clusters_dict: Dict[Tuple[int, int, int], Cluster] = dict()
+    for cluster in clusters:
+        for obj in cluster.objects:
+            clusters_dict[obj.index] = cluster
+    return clusters_dict
+
+
+def combine_actions_with_clusters(actions: List[Action],
+                                  clusters: List[Cluster],
+                                  text_info: Dict) -> List[Action]:
+    clusters_dict: Dict[Tuple[int, int, int], Cluster] = create_clusters_dict(clusters)
+
+    for action in actions:
+        action.set_meaning(text_info)
+        for obj in action.objects:
+            obj.set_meaning(text_info)
+            for image in obj.images:
+                image.set_meaning(text_info)
+            if obj.index in clusters_dict:
+
+
+
+    print("Done")
+
+    return actions
+
+
 def example_usage():
     # text_info
-    filename = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt'
+    # filename = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt'
     # text_info = extract_texts_info([filename])[0]
     text_info = create_text_info_restaurant()
 
-    trees_list = get_trees_list(text_info)
     actions = extract_actions(text_info)
+    clusters = extract_clusters(text_info)
+    combine_actions_with_clusters(actions, clusters, text_info)
     print("DONE")
 
 

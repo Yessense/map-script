@@ -1,6 +1,6 @@
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import Tuple, Any, List, Dict, Union, Optional
+from typing import Tuple, Any, List, Dict, Union, Optional, Set
 from nltk.stem.wordnet import WordNetLemmatizer
 
 from src.script_extraction.wn import get_meaning
@@ -79,7 +79,7 @@ class POS(Enum):
 
 
 # Restricted parts of speech for role filling
-RESTRICTED_POS = {POS.PUNCT, POS.CCONJ, POS.DET, POS.ADP, POS.VERB, POS.PART}
+ALLOWED_POS = {POS.VERB, POS.NOUN, POS.ADV, POS.ADJ}
 # Allowed pronouns
 ALLOWED_PRON = {"i", "we"}
 # Part of speech mapping for lemmatizing
@@ -104,6 +104,14 @@ class Position:
     @property
     def index(self) -> Tuple[int, int, int]:
         return self.sentence_number, self.start_symbol, self.end_symbol
+
+    def set_symbols_bounds(self, sentence):
+        start_symbol = 0
+        for word_number in range(self.start_word):
+            start_symbol += len(sentence[word_number]) + 1
+
+        self.start_symbol = start_symbol
+        self.set_end_symbol(sentence[self.start_word])
 
     @property
     def words(self) -> int:
@@ -148,6 +156,10 @@ class WordsObject:
     pos: POS = POS.NONE
     _synsets_len: int = 1
     _synset_number: int = 0
+    _lemma: Optional[str] = None
+
+    def __post_init__(self):
+        self.text = self.text.lower()
 
     @property
     def index(self) -> Tuple[int, int, int]:
@@ -155,12 +167,15 @@ class WordsObject:
 
     @property
     def lemma(self) -> str:
+        if self._lemma is not None:
+            return self._lemma
         # self.pos != POS.PHRASE
         if self.pos in POS_FOR_LEM:
             # more correct lematize, based on part of speech
-            return lemmatizer.lemmatize(self.text, POS_FOR_LEM[self.pos])
+            self._lemma = lemmatizer.lemmatize(self.text, POS_FOR_LEM[self.pos])
         else:
-            return lemmatizer.lemmatize(self.text)
+            self._lemma = lemmatizer.lemmatize(self.text)
+        return self._lemma
 
     def set_part_of_speech(self, sentences_info: List[Dict[str, Any]]):
         if self.position.words == 1:
@@ -171,14 +186,14 @@ class WordsObject:
     @property
     def is_accepted(self) -> bool:
         """Check pos  candidate"""
-        return self.pos not in RESTRICTED_POS
+        return self.pos in ALLOWED_POS or self.text in ALLOWED_PRON
 
-    def set_meaning(self, sentences_info: List[Dict[str, Any]]) -> None:
-        sentence = sentences_info[self.position.sentence_number]['semantic_roles']['words']
+    def set_meaning(self, text_info: Dict[str, Any]) -> None:
+        sentence = text_info['sentences_info'][self.position.sentence_number]['semantic_roles']['words']
 
         self._synsets_len, self._synset_number = get_meaning(sentence=sentence,
-                                                           lemma=self.lemma,
-                                                           pos=POS_FOR_LEM.get(self.pos, None))
+                                                             lemma=self.lemma,
+                                                             pos=POS_FOR_LEM.get(self.pos, None))
 
     @property
     def synsets_len(self):
@@ -187,9 +202,6 @@ class WordsObject:
     @property
     def synset_number(self):
         return self._synset_number
-
-
-
 
 
 @dataclass
@@ -223,9 +235,12 @@ class Cluster:
     Contains all named group entities
     """
     # named group
+    positions: Set[Position] = field(default_factory=set)
     objects: List[Obj] = field(default_factory=list)
+    images: List[WordsObject] = field(default_factory=list)
 
     def add_obj(self, words_object: WordsObject) -> None:
         self.objects.append(words_object)
 
-
+    def add_image(self, words_object: WordsObject) -> None:
+        self.images.append(words_object)

@@ -175,6 +175,5 @@ def find_object_images(parent_obj: Union[WordsObject, Action],
                                                       end_symbol=spans['end']),
                                     pos=POS(child['attributes'][0]))
             if words_obj.position.inside(parent_obj.position) and words_obj.is_accepted:
-                words_obj.set_meaning(text_info['sentences_info'])
                 object_images.append(words_obj)
     return object_images
