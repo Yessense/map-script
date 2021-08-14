@@ -253,3 +253,5 @@ class Cluster:
 
     def add_real_obj(self, obj: Union[WordsObject, Obj, Action]) -> None:
         self.real_objects.append(obj)
+        for image in obj.images:
+            self.add_image(obj)
