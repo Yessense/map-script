@@ -69,7 +69,7 @@ def extract_clusters(text_info: Dict) -> List[Cluster]:
                     obj.set_part_of_speech(sentences_info=text_info['sentences_info'])
                     if obj.is_accepted:
                         obj.position.set_symbols_bounds(sentence['semantic_roles']['words'])
-                        cluster.add_obj(obj)
+                        cluster.add_cluster_obj(obj)
         clusters.append(cluster)
 
     trees_list = get_trees_list(text_info)

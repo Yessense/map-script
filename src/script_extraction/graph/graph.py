@@ -58,11 +58,11 @@ class Graph:
 
     def add_verb_to_graph(self, verb: Role):
         # if no childs
-        if not len(verb.objects):
+        if not len(verb.cluster_objects):
             return None
         parent_v = self.add_vertex(verb)
 
-        for role in verb.objects:
+        for role in verb.cluster_objects:
             child_v = self.add_vertex(role)
             self.add_edge(parent_v.index, child_v.index, role.argument_type)
 

@@ -149,7 +149,7 @@ class Position:
 @dataclass
 class WordsObject:
     """
-    Base class for any words objects
+    Base class for any words cluster_objects
     """
     text: str = ""
     position: Position = Position()
@@ -218,7 +218,7 @@ class Obj(WordsObject):
 class Action(WordsObject):
     """
     Contains information for action sign
-    Roles, objects, children Actions
+    Roles, cluster_objects, children Actions
     """
     objects: List[Obj] = field(default_factory=list)
 
@@ -234,13 +234,22 @@ class Cluster:
     """
     Contains all named group entities
     """
-    # named group
     positions: Set[Position] = field(default_factory=set)
-    objects: List[Obj] = field(default_factory=list)
-    images: List[WordsObject] = field(default_factory=list)
+    # named group - allenlp coreferences out
+    cluster_objects: List[Obj] = field(default_factory=list)
+    # according to cluster objects, real objects
+    real_objects: List[Union[WordsObject, Obj, Action]] = field(default_factory=list)
+    images: Dict[Tuple[int, int, int], WordsObject] = field(default_factory=list)
 
-    def add_obj(self, words_object: WordsObject) -> None:
-        self.objects.append(words_object)
+    def add_cluster_obj(self, obj: Obj) -> None:
+        self.cluster_objects.append(obj)
+        self.positions.add(obj.position)
+        for image in obj.images:
+            self.add_image(obj)
 
-    def add_image(self, words_object: WordsObject) -> None:
-        self.images.append(words_object)
+    def add_image(self, obj: Union[WordsObject, Obj, Action]) -> None:
+        if obj.index not in self.images:
+            self.images[obj.index] = obj
+
+    def add_real_obj(self, obj: Union[WordsObject, Obj, Action]) -> None:
+        self.real_objects.append(obj)

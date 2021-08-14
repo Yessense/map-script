@@ -8,14 +8,14 @@ def resolve_phrases(items: List[Union[Action, Cluster]],
                     text_info: Dict[str, Any]) -> List[Union[Action, Cluster]]:
     # finding child object which is phrase
     for item_index, item in enumerate(items):
-        for i, obj in enumerate(item.objects):
+        for i, obj in enumerate(item.cluster_objects):
             if obj.pos == POS.PHRASE:
                 # candidates are inside phrase
                 candidates_for_obj: List[Tuple[int, WordsObject]] = [
                     (level, words_obj) for level, words_obj in trees_list[obj.position.sentence_number]
                     if words_obj.position.inside(obj.position) and words_obj.is_accepted]
-                # removing phrase from .objects
-                item.objects[i] = None
+                # removing phrase from .cluster_objects
+                item.cluster_objects[i] = None
 
                 # if there are accepted candidates
                 if len(candidates_for_obj):
@@ -36,9 +36,9 @@ def resolve_phrases(items: List[Union[Action, Cluster]],
                     # add images
                     for phrase_shard in new_objects:
                         phrase_shard.images = find_object_images(obj, phrase_shard, text_info=text_info)
-                    item.objects.extend(new_objects)
-        # delete None objects (phrases)
-        item.objects = [obj for obj in item.objects if obj is not None]
+                    item.cluster_objects.extend(new_objects)
+        # delete None cluster_objects (phrases)
+        item.cluster_objects = [obj for obj in item.cluster_objects if obj is not None]
     return items
 
 

@@ -1,6 +1,6 @@
 import dataclasses
 from dataclasses import field
-from typing import List, Any, Tuple, Dict, Set
+from typing import List, Any, Tuple, Dict, Set, Union
 from enum import Enum
 import re
 import itertools
@@ -94,7 +94,7 @@ def process_action(action_info: Dict, sentences_info: List[Dict[str, Any]],
 def add_hypernims(actions: List[Action], text_info: Dict[str, Any]):
     # allowed_pos_types = {'NOUN': 'n', 'ADJ': 'a', 'ADV': 'r'}
     # for action in actions:
-    #     for obj in action.objects:
+    #     for obj in action.cluster_objects:
     #         if obj.pos.value in allowed_pos_types:
     #             sent = text_info['sentences_info'][action.position.sentence_number]['semantic_roles']['words']
     #             ss = lesk(sent, obj.text)
@@ -174,7 +174,7 @@ def find_actions(sentence_number, node: Dict[str, Any], actions_dict, parent: Ac
 def create_clusters_dict(clusters: List[Cluster]) -> Dict[Tuple[int, int, int], Cluster]:
     clusters_dict: Dict[Tuple[int, int, int], Cluster] = dict()
     for cluster in clusters:
-        for obj in cluster.objects:
+        for obj in cluster.cluster_objects:
             clusters_dict[obj.index] = cluster
     return clusters_dict
 
@@ -184,13 +184,19 @@ def combine_actions_with_clusters(actions: List[Action],
                                   text_info: Dict) -> List[Action]:
     clusters_dict: Dict[Tuple[int, int, int], Cluster] = create_clusters_dict(clusters)
 
+    def process_real_obj(obj: Union[WordsObject, Obj, Action]):
+        obj.set_meaning(text_info)
+        if obj.index in clusters_dict:
+            clusters_dict[obj.index].add_real_obj(obj)
+
     for action in actions:
-        action.set_meaning(text_info)
+        process_real_obj(action)
+
         for obj in action.objects:
-            obj.set_meaning(text_info)
+            process_real_obj(obj)
+
             for image in obj.images:
-                image.set_meaning(text_info)
-            if obj.index in clusters_dict:
+                process_real_obj(image)
 
 
 
