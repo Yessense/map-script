@@ -1,7 +1,7 @@
 import enum
 from typing import Any, Dict, List, Union, Iterable
 
-from mapcore.swm.src.components.semnet import Sign, Event, CausalMatrix
+from mapcore.swm.src.components.semnet import Sign, Event, CausalMatrix, Connector
 
 from src.script_extraction.text_preprocessing.extract_clusters import extract_clusters
 from src.script_extraction.text_preprocessing.extract_semantic_roles import extract_actions, \
@@ -29,6 +29,14 @@ def add_new_sign(script: Dict[str, Sign],
 
 
         script[name] = sign
+
+    else:
+        if isinstance(obj, Action):
+            sign = script[name]
+            if len(sign.significances[1].cause) != obj.synsets_len:
+                for significance_number in sign.significances:
+                    for i, role in enumerate(roles_signs):
+                        sign.significances[significance_number].add_event(event=Event(order=i))
 
     return script
 
@@ -66,9 +74,19 @@ def extract_script(text_info: Dict[str, Any]):
 
         for role_object in action.objects:
             if role_object.synsets_len != -1:
+                role_sign = script[role_object.lemma]
                 action_cm: CausalMatrix = action_sign.significances[action.synset_number + 1]
-                action_event: Event = action_cm.cause[role_object.arg_type]
-                action_event.add_coincident()
+                # action_cm.add_feature(script[role_object.lemma].significances[role_object.synset_number + 1])
+                action_event: Event = action_cm.cause[roles_dict[role_object.arg_type]]
+                connector: Connector = Connector(in_sign=action_sign,
+                                                 out_sign=role_sign,
+                                                 in_index=0)
+                action_event.add_coincident(base='significance', connector=connector)
+
+    for action in actions:
+        for obj in action.objects:
+            for image in obj.images:
+                pass
 
     return script
 
