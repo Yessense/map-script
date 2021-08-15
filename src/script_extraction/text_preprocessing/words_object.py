@@ -79,7 +79,7 @@ class POS(Enum):
 
 
 # Restricted parts of speech for role filling
-ALLOWED_POS = {POS.VERB, POS.NOUN, POS.ADV, POS.ADJ}
+ALLOWED_POS = {POS.VERB, POS.NOUN, POS.ADV, POS.ADJ, POS.PRON, POS.PHRASE}
 # Allowed pronouns
 ALLOWED_PRON = {"i", "we"}
 # Part of speech mapping for lemmatizing
@@ -105,13 +105,35 @@ class Position:
     def index(self) -> Tuple[int, int, int]:
         return self.sentence_number, self.start_symbol, self.end_symbol
 
-    def set_symbols_bounds(self, sentence):
+    def set_symbols_bounds(self, sentence, text):
         start_symbol = 0
         for word_number in range(self.start_word):
             start_symbol += len(sentence[word_number]) + 1
 
         self.start_symbol = start_symbol
-        self.set_end_symbol(sentence[self.start_word])
+        self.set_end_symbol(text)
+
+    def set_words_bounds(self, sentence: List[str]):
+        # finding start word
+        current_symbol = 0
+        for word_number, word in enumerate(sentence):
+            if self.start_symbol == current_symbol:
+                self.start_word = word_number
+                break
+            else:
+                current_symbol += len(word) + 1
+
+        # finding end word
+        current_symbol = self.start_symbol
+        for word_number, word in enumerate(sentence[self.start_word:]):
+            current_symbol += len(word) + 1
+            if self.end_symbol == current_symbol:
+                self.end_word = self.start_word + word_number + 1
+                break
+
+
+
+
 
     @property
     def words(self) -> int:
@@ -149,7 +171,7 @@ class Position:
 @dataclass
 class WordsObject:
     """
-    Base class for any words cluster_objects
+    Base class for any words objects
     """
     text: str = ""
     position: Position = Position()
@@ -186,7 +208,7 @@ class WordsObject:
     @property
     def is_accepted(self) -> bool:
         """Check pos  candidate"""
-        return self.pos in ALLOWED_POS or self.text in ALLOWED_PRON
+        return self.pos in ALLOWED_POS
 
     def set_meaning(self, text_info: Dict[str, Any]) -> None:
         sentence = text_info['sentences_info'][self.position.sentence_number]['semantic_roles']['words']
@@ -218,7 +240,7 @@ class Obj(WordsObject):
 class Action(WordsObject):
     """
     Contains information for action sign
-    Roles, cluster_objects, children Actions
+    Roles, objects, children Actions
     """
     objects: List[Obj] = field(default_factory=list)
 
@@ -234,16 +256,14 @@ class Cluster:
     """
     Contains all named group entities
     """
-    positions: Set[Position] = field(default_factory=set)
     # named group - allenlp coreferences out
-    cluster_objects: List[Obj] = field(default_factory=list)
+    objects: List[Obj] = field(default_factory=list)
     # according to cluster objects, real objects
     real_objects: List[Union[WordsObject, Obj, Action]] = field(default_factory=list)
-    images: Dict[Tuple[int, int, int], WordsObject] = field(default_factory=list)
+    images: Dict[Tuple[int, int, int], WordsObject] = field(default_factory=dict)
 
     def add_cluster_obj(self, obj: Obj) -> None:
-        self.cluster_objects.append(obj)
-        self.positions.add(obj.position)
+        self.objects.append(obj)
         for image in obj.images:
             self.add_image(obj)
 
@@ -253,5 +273,6 @@ class Cluster:
 
     def add_real_obj(self, obj: Union[WordsObject, Obj, Action]) -> None:
         self.real_objects.append(obj)
-        for image in obj.images:
-            self.add_image(obj)
+        if isinstance(obj, Obj):
+            for image in obj.images:
+                self.add_image(image)

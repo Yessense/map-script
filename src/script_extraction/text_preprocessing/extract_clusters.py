@@ -68,7 +68,7 @@ def extract_clusters(text_info: Dict) -> List[Cluster]:
                               arg_type=Roles.NAMED_GROUP)
                     obj.set_part_of_speech(sentences_info=text_info['sentences_info'])
                     if obj.is_accepted:
-                        obj.position.set_symbols_bounds(sentence['semantic_roles']['words'])
+                        obj.position.set_symbols_bounds(sentence['semantic_roles']['words'], obj.text)
                         cluster.add_cluster_obj(obj)
         clusters.append(cluster)
 
@@ -81,10 +81,6 @@ def example_usage() -> None:
     # text_info
     text_info = create_text_info_restaurant()
     clusters = extract_clusters(text_info)
-    trees_list = get_trees_list(text_info)
-
-    resolve_phrases(clusters, trees_list, text_info)
-
     # semantic_roles with coreferences
     print("DONE")
 

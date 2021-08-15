@@ -8,14 +8,24 @@ def resolve_phrases(items: List[Union[Action, Cluster]],
                     text_info: Dict[str, Any]) -> List[Union[Action, Cluster]]:
     # finding child object which is phrase
     for item_index, item in enumerate(items):
-        for i, obj in enumerate(item.cluster_objects):
-            if obj.pos == POS.PHRASE:
+        for i, obj in enumerate(item.objects):
+            if obj.pos is POS.PHRASE:
                 # candidates are inside phrase
                 candidates_for_obj: List[Tuple[int, WordsObject]] = [
                     (level, words_obj) for level, words_obj in trees_list[obj.position.sentence_number]
                     if words_obj.position.inside(obj.position) and words_obj.is_accepted]
-                # removing phrase from .cluster_objects
-                item.cluster_objects[i] = None
+
+                test_candidates_for_obj = []
+                for level, words_obj in trees_list[obj.position.sentence_number]:
+                    inside = words_obj.position.inside(obj.position)
+                    accepted = words_obj.is_accepted
+                    passsing = inside and accepted
+                    if passsing:
+                        test_candidates_for_obj.append(words_obj)
+
+
+                # removing phrase from .objects
+                item.objects[i] = None
 
                 # if there are accepted candidates
                 if len(candidates_for_obj):
@@ -36,9 +46,9 @@ def resolve_phrases(items: List[Union[Action, Cluster]],
                     # add images
                     for phrase_shard in new_objects:
                         phrase_shard.images = find_object_images(obj, phrase_shard, text_info=text_info)
-                    item.cluster_objects.extend(new_objects)
-        # delete None cluster_objects (phrases)
-        item.cluster_objects = [obj for obj in item.cluster_objects if obj is not None]
+                    item.objects.extend(new_objects)
+        # delete None objects (phrases)
+        item.objects = [obj for obj in item.objects if obj is not None]
     return items
 
 
@@ -77,6 +87,8 @@ def get_trees_list(text_info: Dict[str, Any]) -> List[List[Tuple[int, WordsObjec
     for i, sentence_info in enumerate(text_info['sentences_info']):
         trees_list.append(get_roots(sentence_info['dependency']['hierplane_tree']['root'],
                                     sentence_number=i))
+        for level, words_object in trees_list[-1]:
+            words_object.position.set_words_bounds(sentence_info['dependency']['words'])
     return trees_list
 
 

@@ -13,7 +13,7 @@ def add_image_node(net: Network, obj: Obj) -> None:
 
 def add_action_node(net: Network, action) -> None:
     net.add_node(action.index(), label=action.text, color='#2D9BF0', size=17)
-    for obj in action.cluster_objects:
+    for obj in action.objects:
         net.add_node(obj.index(), label=obj.text, color="#808080", size=14)
         net.add_edge(action.index(), obj.index(), label=obj.arg_type.value)
         add_image_node(net, obj)
