@@ -179,6 +179,7 @@ class WordsObject:
     _synsets_len: int = 1
     _synset_number: int = 0
     _lemma: Optional[str] = None
+    cluster: Optional[Any] = None
 
     def __post_init__(self):
         self.text = self.text.lower()

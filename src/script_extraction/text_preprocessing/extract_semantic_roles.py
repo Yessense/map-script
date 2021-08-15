@@ -182,12 +182,17 @@ def create_clusters_dict(clusters: List[Cluster]) -> Dict[Tuple[int, int, int], 
 def combine_actions_with_clusters(actions: List[Action],
                                   clusters: List[Cluster],
                                   text_info: Dict) -> List[Action]:
+    """
+    For each object in cluster add it images to cluster
+    Then add field `cluster` to obj
+    """
     clusters_dict: Dict[Tuple[int, int, int], Cluster] = create_clusters_dict(clusters)
 
-    def process_real_obj(obj: Union[WordsObject, Obj, Action]):
+    def process_real_obj(obj: Union[WordsObject, Obj, Action]) -> None:
         obj.set_meaning(text_info)
         if obj.index in clusters_dict:
             clusters_dict[obj.index].add_real_obj(obj)
+            obj.cluster = clusters_dict[obj.index]
 
     for action in actions:
         process_real_obj(action)
@@ -197,11 +202,6 @@ def combine_actions_with_clusters(actions: List[Action],
 
             for image in obj.images:
                 process_real_obj(image)
-
-
-
-    print("Done")
-
     return actions
 
 
