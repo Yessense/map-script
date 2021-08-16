@@ -79,7 +79,7 @@ class POS(Enum):
 
 
 # Restricted parts of speech for role filling
-ALLOWED_POS = {POS.VERB, POS.NOUN, POS.ADV, POS.ADJ, POS.PRON, POS.PHRASE}
+ALLOWED_POS = {POS.VERB, POS.NOUN, POS.ADV, POS.ADJ, POS.PRON, POS.PHRASE, POS.PROPN}
 # Allowed pronouns
 ALLOWED_PRON = {"i", "we"}
 # Part of speech mapping for lemmatizing

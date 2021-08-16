@@ -20,17 +20,20 @@ def add_new_sign(script: Dict[str, Sign],
     if name not in script:
         sign = Sign(name)
 
+        # add meanings and significances for each wn meaning
         for i in range(obj.synsets_len):
+            image = sign.add_image(pm=None)
+            image.add_event(event=Event(order=0))
             significance = sign.add_significance(pm=None)
 
+            # add events to action for each role
             if isinstance(obj, Action):
                 for i, role in enumerate(roles_signs):
                     significance.add_event(event=Event(order=i))
 
-
         script[name] = sign
-
     else:
+        # if action sign already created and has no roles
         if isinstance(obj, Action):
             sign = script[name]
             if len(sign.significances[1].cause) != obj.synsets_len:
@@ -68,7 +71,7 @@ def extract_script(text_info: Dict[str, Any]):
             for image in obj.images:
                 add_new_sign(script=script, obj=image, roles_signs=roles_signs)
 
-
+    # add role-fillers to actions
     for action in actions:
         action_sign = script[action.lemma]
 
@@ -80,13 +83,28 @@ def extract_script(text_info: Dict[str, Any]):
                 action_event: Event = action_cm.cause[roles_dict[role_object.arg_type]]
                 connector: Connector = Connector(in_sign=action_sign,
                                                  out_sign=role_sign,
-                                                 in_index=0)
+                                                 in_index=action.synset_number + 1, # action signifincance number
+                                                 out_index=role_object.synset_number + 1, # role significance number
+                                                 in_order=roles_dict[role_object.arg_type]) # role number (Event number)
                 action_event.add_coincident(base='significance', connector=connector)
 
+    # add images
     for action in actions:
         for obj in action.objects:
-            for image in obj.images:
-                pass
+            if obj.synsets_len != -1:
+                for image in obj.images:
+                    if image.synsets_len != -1:
+                        obj_image_matrix: CausalMatrix = script[obj.lemma].images[obj.synset_number + 1]
+                        obj_image_event: Event = obj_image_matrix.cause[0]
+
+                        # connector to image
+                        connector: Connector  = Connector(in_sign=script[obj.lemma],
+                                                          out_sign=script[image.lemma],
+                                                          in_index=obj.synset_number + 1, # obj images number
+                                                          out_index=image.synset_number + 1, # image images number
+                                                          in_order=0)
+                        obj_image_event.add_coincident(base='image', connector=connector)
+
 
     return script
 
