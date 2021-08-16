@@ -9,18 +9,34 @@ from nltk.wsd import lesk
 
 def get_meaning(sentence: List[str], lemma: str, pos: str) -> Tuple[int, int]:
     synsets: List[Synset] = wn.synsets(lemma)
+    if not len(synsets):
+        return 1, 0
+    elif len(synsets) == 1:
+        return 1, 0
     synset: Synset = lesk(context_sentence=sentence,
                           ambiguous_word=lemma,
                           pos=pos,
                           synsets=synsets)
     if synset is None:
-        return -1, -1
+        # check for 's' pos
+        if pos == 'a':
+            synset = lesk(context_sentence=sentence,
+                                  ambiguous_word=lemma,
+                                  pos=pos,
+                                  synsets=synsets)
+            if synset is None:
+                return -1, -1
+        else:
+            return -1, -1
+
     name = synset.name()
 
     for i, ss in enumerate(synsets):
         if ss.name() == name:
             return len(synsets), i
+
     return -1, -1
+
 
 if __name__ == '__main__':
     sent = ['We', 'choose', 'movie', 'for', 'the', 'family', ',', 'we', 'need', 'something', 'pleasant', ',', 'amusing',
@@ -42,10 +58,10 @@ if __name__ == '__main__':
 
     result = get_meaning(sent, 'go', 'v')
 
-
-    sent = ['Even', 'though', 'it', 'must', 'have', 'been', 'very', 'time', '-', 'consuming', 'to', 'prepare', ',', 'it', 'was', 'a', 'delight', 'to', 'see', ',', 'and', 'I', 'had', 'a', 'second', 'helping', '.']
+    sent = ['Even', 'though', 'it', 'must', 'have', 'been', 'very', 'time', '-', 'consuming', 'to', 'prepare', ',',
+            'it', 'was', 'a', 'delight', 'to', 'see', ',', 'and', 'I', 'had', 'a', 'second', 'helping', '.']
     lemma = 'must'
-    synsets = wn.synsets('restaurant')
+    synsets = wn.synsets('excellent')
 
     result = lesk(sent, lemma, pos='v', synsets=synsets)
     print("Done")

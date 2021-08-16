@@ -84,6 +84,8 @@ ALLOWED_POS = {POS.VERB, POS.NOUN, POS.ADV, POS.ADJ, POS.PRON, POS.PHRASE, POS.P
 ALLOWED_PRON = {"i", "we"}
 # Part of speech mapping for lemmatizing
 POS_FOR_LEM = {POS.ADJ: 'a', POS.ADV: 'r', POS.NOUN: 'n', POS.VERB: 'v'}
+# Part of speech for create synsets len
+POS_FOR_SYNSETS = {POS.PRON, POS.PROPN}
 
 
 # ----------------------------------------
@@ -130,10 +132,6 @@ class Position:
             if self.end_symbol == current_symbol:
                 self.end_word = self.start_word + word_number + 1
                 break
-
-
-
-
 
     @property
     def words(self) -> int:
@@ -214,9 +212,13 @@ class WordsObject:
     def set_meaning(self, text_info: Dict[str, Any]) -> None:
         sentence = text_info['sentences_info'][self.position.sentence_number]['semantic_roles']['words']
 
-        self._synsets_len, self._synset_number = get_meaning(sentence=sentence,
-                                                             lemma=self.lemma,
-                                                             pos=POS_FOR_LEM.get(self.pos, None))
+        if self.pos in POS_FOR_SYNSETS:
+            self._synsets_len = 1
+            self._synset_number = 0
+        else:
+            self._synsets_len, self._synset_number = get_meaning(sentence=sentence,
+                                                                 lemma=self.lemma,
+                                                                 pos=POS_FOR_LEM.get(self.pos, None))
 
     @property
     def synsets_len(self):

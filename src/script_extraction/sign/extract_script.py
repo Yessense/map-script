@@ -10,8 +10,6 @@ from src.script_extraction.text_preprocessing.words_object import Action, Cluste
 from src.text_info_restaurant import create_text_info_restaurant
 
 
-
-
 def add_new_sign(script: Dict[str, Sign],
                  obj: Union[WordsObject, Obj, Action],
                  max_roles: int) -> Dict[str, Sign]:
@@ -44,8 +42,6 @@ def add_new_sign(script: Dict[str, Sign],
     return script
 
 
-
-
 def extract_script(text_info: Dict[str, Any]):
     script: Dict[str, Sign] = dict()
 
@@ -63,14 +59,15 @@ def extract_script(text_info: Dict[str, Any]):
             add_new_sign(script=script, obj=action, max_roles=len(roles_dict))
             for obj in action.objects:
                 add_new_sign(script=script, obj=obj, max_roles=len(roles_dict))
-                for image in obj.images:
-                    add_new_sign(script=script, obj=image, max_roles=len(roles_dict))
+                if obj.synsets_len != -1:
+                    for image in obj.images:
+                        add_new_sign(script=script, obj=image, max_roles=len(roles_dict))
 
     # add role-fillers to actions
     for action in actions:
         if len(action.objects):
             action_sign = script[action.lemma]
-
+            i = 0
             for role_object in action.objects:
                 if role_object.synsets_len != -1:
                     role_sign = script[role_object.lemma]
@@ -79,9 +76,11 @@ def extract_script(text_info: Dict[str, Any]):
                     action_event: Event = action_cm.cause[roles_dict[role_object.arg_type]]
                     connector: Connector = Connector(in_sign=action_sign,
                                                      out_sign=role_sign,
-                                                     in_index=action.synset_number + 1, # action signifincance number
-                                                     out_index=role_object.synset_number + 1, # role significance number
-                                                     in_order=roles_dict[role_object.arg_type]) # role number (Event number)
+                                                     in_index=action.synset_number + 1,  # action signifincance number
+                                                     out_index=role_object.synset_number + 1,
+                                                     # role significance number
+                                                     in_order=roles_dict[
+                                                         role_object.arg_type])  # role number (Event number)
                     action_event.add_coincident(base='significance', connector=connector)
 
     # add images
@@ -94,11 +93,11 @@ def extract_script(text_info: Dict[str, Any]):
                         obj_image_event: Event = obj_image_matrix.cause[0]
 
                         # connector to image
-                        connector: Connector  = Connector(in_sign=script[obj.lemma],
-                                                          out_sign=script[image.lemma],
-                                                          in_index=obj.synset_number + 1, # obj images number
-                                                          out_index=image.synset_number + 1, # image images number
-                                                          in_order=0)
+                        connector: Connector = Connector(in_sign=script[obj.lemma],
+                                                         out_sign=script[image.lemma],
+                                                         in_index=obj.synset_number + 1,  # obj images number
+                                                         out_index=image.synset_number + 1,  # image images number
+                                                         in_order=0)
                         obj_image_event.add_coincident(base='image', connector=connector)
     return script
 
