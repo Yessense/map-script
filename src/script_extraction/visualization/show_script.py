@@ -39,7 +39,7 @@ def get_definition(lemma: str, synset_number: int):
 
 
 def show_script(script: Dict[str, Sign], group_roles: bool = False, save_to_file: bool = False):
-    net = Network(height='100%', width='100%', notebook=save_to_file)
+    net = Network(height='100%', width='100%', notebook=save_to_file, directed=False)
 
     # All possible roles
     role_int: Dict[Roles, int] = {role: i for i, role in enumerate(Roles)}
@@ -63,6 +63,7 @@ def show_script(script: Dict[str, Sign], group_roles: bool = False, save_to_file
                                  size=SignifincanceNode.size.value)
                     net.add_edge(source=sign.name,
                                  to=name,
+                                 label='def',
                                  title=get_definition(lemma=sign.name,
                                                       synset_number=cm_index - 1))
                     if group_roles:
@@ -82,7 +83,8 @@ def show_script(script: Dict[str, Sign], group_roles: bool = False, save_to_file
                         if not group_roles:
                             net.add_edge(source=name,
                                          to=out_name,
-                                         label=int_role[event_index].value)
+                                         label=int_role[event_index].value,
+                                         color='#8FD14F' )
                         else:
                             net.add_edge(source=f'{sign.name}:{int_role[event_index].value}',
                                          to=out_name,
@@ -114,8 +116,8 @@ def show_script(script: Dict[str, Sign], group_roles: bool = False, save_to_file
                                  to=out_name,
                                  label="image",
                                  color="#808080")
-                    net.add_edge(source=out_name,
-                                 to=connector.out_sign.name,
+                    net.add_edge(source=connector.out_sign.name,
+                                 to=out_name,
                                  title=get_definition(lemma=connector.out_sign.name,
                                                       synset_number=connector.out_index - 1))
     net.set_options("""

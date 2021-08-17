@@ -42,6 +42,27 @@ def add_new_sign(script: Dict[str, Sign],
     return script
 
 
+def add_role_object_to_action(script: Dict[str, Sign],
+                              roles_dict: Dict[Roles, int],
+                              action: Action,
+                              role_object: Obj) -> None:
+    if role_object.synsets_len == -1:
+        return
+    action_sign = script[action.lemma]
+    role_sign = script[role_object.lemma]
+    action_cm: CausalMatrix = action_sign.significances[action.synset_number + 1]
+    # action_cm.add_feature(script[role_object.lemma].significances[role_object.synset_number + 1])
+    action_event: Event = action_cm.cause[roles_dict[role_object.arg_type]]
+    connector: Connector = Connector(in_sign=action_sign,
+                                     out_sign=role_sign,
+                                     in_index=action.synset_number + 1,  # action signifincance number
+                                     out_index=role_object.synset_number + 1,
+                                     # role significance number
+                                     in_order=roles_dict[
+                                         role_object.arg_type])  # role number (Event number)
+    action_event.add_coincident(base='significance', connector=connector)
+
+
 def extract_script(text_info: Dict[str, Any]):
     script: Dict[str, Sign] = dict()
 
@@ -67,21 +88,10 @@ def extract_script(text_info: Dict[str, Any]):
     for action in actions:
         if len(action.objects):
             action_sign = script[action.lemma]
-            i = 0
             for role_object in action.objects:
-                if role_object.synsets_len != -1:
-                    role_sign = script[role_object.lemma]
-                    action_cm: CausalMatrix = action_sign.significances[action.synset_number + 1]
-                    # action_cm.add_feature(script[role_object.lemma].significances[role_object.synset_number + 1])
-                    action_event: Event = action_cm.cause[roles_dict[role_object.arg_type]]
-                    connector: Connector = Connector(in_sign=action_sign,
-                                                     out_sign=role_sign,
-                                                     in_index=action.synset_number + 1,  # action signifincance number
-                                                     out_index=role_object.synset_number + 1,
-                                                     # role significance number
-                                                     in_order=roles_dict[
-                                                         role_object.arg_type])  # role number (Event number)
-                    action_event.add_coincident(base='significance', connector=connector)
+                add_role_object_to_action(script, roles_dict, action, role_object)
+                # if role_object.cluster is not None:
+                #     for
 
     # add images
     for action in actions:

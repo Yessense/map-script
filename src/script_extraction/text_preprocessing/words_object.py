@@ -32,16 +32,19 @@ class Roles(Enum):
     ARGM_PRD = 'ARGM-PRD'
     ARGM_PRP = 'ARGM-PRP'
     ARGM_ADV = 'ARGM-ADV'
-    R_ARGM_TMP = 'R-ARGM-TMP'
     ARGM_GOL = 'ARGM-GOL'
-    C_ARG1 = 'C-ARG1'
-    R_ARG0 = 'R-ARG0'
     ARGM_CAU = 'ARGM-CAU'
     ARGM_REC = 'ARGM-REC'
+    ARGM_COM = 'ARGM-COM'
+    R_ARGM_TMP = 'R-ARGM-TMP'
+    R_ARG0 = 'R-ARG0'
     R_ARG1 = 'R-ARG1'
+    C_ARG1 = 'C-ARG1'
+    C_ARG2 = 'C-ARG2'
     V = 'V'
     NONE = "NONE"
     NAMED_GROUP = "NAMED-GROUP"
+
 
 
 class POS(Enum):
