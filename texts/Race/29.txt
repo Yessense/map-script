@@ -1,0 +1,12 @@
+If the hackings   taught us anything in 2014, it's actually nothing.
+Password management firm SplashData released its list of the worst passwords of the year and it's just as terrible as you'd think. The most common leaked password in 2014 was "123456," followed by "password" -- both topped the list the year before, too.
+While numbers were as popular as ever as passwords, sports terms like "baseball" and "football" were used more often. Birthday years were common too (especially 1989, 1990, 1991 and 1992) and names like "Michael", "Jennifer" and "Hunter" are also among the top 100 worst passwords of 2014.
+Here's a look at the top 10 worst passwords of the year:
+1. 123456 (Unchanged from 2013)   6. 234567890 (Unchanged)
+2. password (Unchanged)     7. baseball (New)
+3. 12345 (Up 17)       8. dragon (New)
+4. 12345678 (Down 1)      9. football (New)
+5. qwerty (Down 1)        10. monkey (New)
+This year's worst passwords are painfully weak, but what were once considered clever password strategies -- using symbols, capitalizations, the number 3 in place of the letter "e" -- are old tricks.
+It's now recommended to pick a different password for each account you use -- you wouldn't use the same key in all of your locks, and the same goes for passwords.
+Companies like Facebook, Twitter and Apple are now trying to make hacking more difficult on their services by offering two-factor authentication  , which is basically like double locking your door at night. Each time you want to log into   that account, the company will send a code to your phone -- it changes after each login attempt, so hackers would have to be in physical possession of your smartphone to know the code.

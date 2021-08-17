@@ -20,6 +20,7 @@ class SignifincanceNode(Enum):
     color = '#6495ED'
     size = 13
 
+
 class RoleNode(Enum):
     color = '#8FD14F'
     size = 13
