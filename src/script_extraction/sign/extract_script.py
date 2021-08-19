@@ -141,11 +141,30 @@ def create_signs(text_info: Dict[str, Any]) -> Tuple[List[Tuple[Sign, int]], Dic
         for obj in action.objects:
             # if no wordnet meanings -> no signifincances matrices ->
             # we can't add connection to this Sign -> Look next
-            if obj.lemma not in objects_signs:
-                objects_signs[obj.lemma] = create_sign(obj=obj, max_roles=len(roles_dict))
-            for image in obj.images:
-                if image.lemma not in objects_signs:
-                    objects_signs[image.lemma] = create_sign(obj=image, max_roles=len(roles_dict))
+            if obj.cluster is None:
+                if obj.lemma not in objects_signs:
+                    objects_signs[obj.lemma] = create_sign(obj=obj, max_roles=len(roles_dict))
+                    for image in obj.images:
+                        if image.cluster is None:
+                            if image.lemma not in objects_signs:
+                                objects_signs[image.lemma] = create_sign(obj=image, max_roles=len(roles_dict))
+                        else:
+                            for real_obj in image.cluster.real_objects:
+                                if real_obj.lemma not in objects_signs:
+                                    objects_signs[real_obj.lemma] = create_sign(obj=real_obj,
+                                                                                max_roles=len(roles_dict))
+            else:
+                for real_obj in obj.cluster.real_objects:
+                    if real_obj.lemma not in objects_signs:
+                        objects_signs[real_obj.lemma] = create_sign(obj=real_obj, max_roles=len(roles_dict))
+                        for image in real_obj.images:
+                            if image.cluster is None:
+                                if image.lemma not in objects_signs:
+                                    objects_signs[image.lemma] = create_sign(obj=image, max_roles=len(roles_dict))
+                            else:
+                                for real_obj in image.cluster.real_objects:
+                                    if real_obj.lemma not in objects_signs:
+                                        objects_signs[real_obj.lemma] = create_sign(obj=real_obj, max_roles=len(roles_dict))
 
     # add role-fillers to actions
     for action_index, action in enumerate(actions):

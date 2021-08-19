@@ -61,7 +61,7 @@ if __name__ == '__main__':
     sent = ['Even', 'though', 'it', 'must', 'have', 'been', 'very', 'time', '-', 'consuming', 'to', 'prepare', ',',
             'it', 'was', 'a', 'delight', 'to', 'see', ',', 'and', 'I', 'had', 'a', 'second', 'helping', '.']
     lemma = 'must'
-    synsets = wn.synsets('excellent')
+    synsets = wn.synsets('i')
 
-    result = lesk(sent, lemma, pos='v', synsets=synsets)
+    result = lesk(sent, lemma, synsets=synsets)
     print("Done")
