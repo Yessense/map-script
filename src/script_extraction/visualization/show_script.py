@@ -4,7 +4,7 @@ from typing import Dict
 from mapcore.swm.src.components.semnet import Sign
 from pyvis.network import Network
 
-from src.script_extraction.sign.extract_script import extract_script
+from src.script_extraction.sign.extract_script import create_signs
 from src.script_extraction.text_preprocessing.words_object import Roles
 from src.text_info_restaurant import create_text_info_restaurant
 
@@ -63,7 +63,6 @@ def show_script(script: Dict[str, Sign], group_roles: bool = False, save_to_file
                                  size=SignifincanceNode.size.value)
                     net.add_edge(source=sign.name,
                                  to=name,
-                                 label='def',
                                  title=get_definition(lemma=sign.name,
                                                       synset_number=cm_index - 1))
                     if group_roles:
@@ -88,7 +87,7 @@ def show_script(script: Dict[str, Sign], group_roles: bool = False, save_to_file
                         else:
                             net.add_edge(source=f'{sign.name}:{int_role[event_index].value}',
                                          to=out_name,
-                                         label='filler')
+                                         )
                         net.add_edge(source=connector.out_sign.name,
                                      to=out_name,
                                      title=get_definition(lemma=connector.out_sign.name,
@@ -104,7 +103,6 @@ def show_script(script: Dict[str, Sign], group_roles: bool = False, save_to_file
                                  size=SignifincanceNode.size.value)
                     net.add_edge(source=sign.name,
                                  to=name,
-                                 label='def',
                                  title=get_definition(lemma=sign.name,
                                                       synset_number=cm_index - 1))
                 for connector in event.coincidences:
@@ -114,7 +112,6 @@ def show_script(script: Dict[str, Sign], group_roles: bool = False, save_to_file
                                  size=SignifincanceNode.size.value)
                     net.add_edge(source=name,
                                  to=out_name,
-                                 label="image",
                                  color="#808080")
                     net.add_edge(source=connector.out_sign.name,
                                  to=out_name,
@@ -134,7 +131,7 @@ def show_script(script: Dict[str, Sign], group_roles: bool = False, save_to_file
 
 def main():
     text_info = create_text_info_restaurant()
-    script = extract_script(text_info)
+    script = create_signs(text_info)
 
     show_script(script, group_roles=True)
 

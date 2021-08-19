@@ -212,6 +212,10 @@ class WordsObject:
         """Check pos  candidate"""
         return self.pos in ALLOWED_POS
 
+    @property
+    def may_be_image(self) -> bool:
+        return self.pos is POS.ADJ
+
     def set_meaning(self, text_info: Dict[str, Any]) -> None:
         sentence = text_info['sentences_info'][self.position.sentence_number]['semantic_roles']['words']
 

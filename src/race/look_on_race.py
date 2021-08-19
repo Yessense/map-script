@@ -2,7 +2,7 @@ import hashlib
 import os
 import pickle
 
-from src.script_extraction.sign.extract_script import extract_script
+from src.script_extraction.sign.extract_script import create_signs
 from src.script_extraction.visualization.show_script import show_script
 
 saved_files_dir = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/saved/'
@@ -19,7 +19,7 @@ for filepath in files:
     if h in saved_files:
         with open(os.path.join(saved_files_dir, h), 'rb') as f:
             info = pickle.load(f)
-            script = extract_script(info)
+            script = create_signs(info)
             show_script(script, group_roles=True)
             print(f'{filepath} processed')
 
