@@ -1,14 +1,20 @@
 from enum import Enum
-from typing import Dict
+from typing import Dict, Optional
 
 from mapcore.swm.src.components.semnet import Sign
 from pyvis.network import Network
 
-from src.script_extraction.sign.extract_script import create_signs
+from src.script_extraction.sign.extract_script import create_signs, extract_script
 from src.script_extraction.text_preprocessing.words_object import Roles
 from src.text_info_restaurant import create_text_info_restaurant
 
 from nltk.corpus import wordnet as wn
+
+
+class ScriptNode(Enum):
+    name = 'Script'
+    color = '#F24726'
+    size = 20
 
 
 class SignNode(Enum):
@@ -38,85 +44,135 @@ def get_definition(lemma: str, synset_number: int):
     return ss.definition()
 
 
-def show_script(script: Dict[str, Sign], group_roles: bool = False, save_to_file: bool = False):
+def display_sign(net: Network,
+                 sign: Sign,
+                 int_role: Dict[int, Roles],
+                 group_roles: bool,
+                 step: Optional[int] = None):
+    # for each wn meaning
+    for cm_index, cm in sign.significances.items():
+        # meaning sub node
+        sub_meaning_name = f'{sign.name}:{cm_index}'
+
+        for event_index, event in enumerate(cm.cause):
+            if len(event.coincidences):
+                # if has connections (roles)
+                # create sub meaning node
+                # do
+                net.add_node(n_id=sub_meaning_name,
+                             color=SignifincanceNode.color.value,
+                             size=SignifincanceNode.size.value)
+                # do -> do:1
+                net.add_edge(source=sign.name,
+                             to=sub_meaning_name,
+                             title=get_definition(lemma=sign.name,
+                                                  synset_number=cm_index - 1))
+
+                # create role
+                role_name = f'{sign.name}:{cm_index}:{int_role[event_index].value}'
+                net.add_node(n_id=role_name,
+                             color=RoleNode.color.value,
+                             size=RoleNode.size.value)
+                # do:1 -> do:1:ARG0
+                net.add_edge(source=sub_meaning_name,
+                             to=role_name,
+                             title=int_role[event_index].value)
+
+                # link to fillers of role
+                for connector in event.coincidences:
+                    out_sub_node_name = f'{connector.out_sign.name}:{connector.out_index}'
+                    # create role filler
+                    net.add_node(n_id=out_sub_node_name,
+                                 color=SignifincanceNode.color.value,
+                                 size=SignifincanceNode.size.value)
+                    # do:1:ARG0 -> something:1
+                    net.add_edge(source=role_name,
+                                 to=out_sub_node_name,
+                                 label=step if step is not None else "")
+                    # something:1 -> something
+                    net.add_edge(source=connector.out_sign.name,
+                                 to=out_sub_node_name,
+                                 title=get_definition(lemma=connector.out_sign.name,
+                                                      synset_number=connector.out_index - 1))
+
+        # images
+        for cm_index, cm in sign.images.items():
+            sub_meaning_name = f'{sign.name}:{cm_index}'
+            for event_index, event in enumerate(cm.cause):
+                if len(event.coincidences):
+                    # create sub_meaning_node
+                    net.add_node(n_id=sub_meaning_name,
+                                 color=SignifincanceNode.color.value,
+                                 size=SignifincanceNode.size.value)
+                    # do -> do:1
+                    net.add_edge(source=sign.name,
+                                 to=sub_meaning_name,
+                                 title=get_definition(lemma=sign.name,
+                                                      synset_number=cm_index - 1))
+                for connector in event.coincidences:
+                    out_sub_node_name = f'{connector.out_sign.name}:{connector.out_index}'
+                    # create out sub meaning node
+                    net.add_node(n_id=out_sub_node_name,
+                                 color=SignifincanceNode.color.value,
+                                 size=SignifincanceNode.size.value)
+                    # do:1 -> something:1
+                    net.add_edge(source=sub_meaning_name,
+                                 to=out_sub_node_name,
+                                 label='img',
+                                 color="#808080")
+                    # something:1 -> something
+                    net.add_edge(source=connector.out_sign.name,
+                                 to=out_sub_node_name,
+                                 title=get_definition(lemma=connector.out_sign.name,
+                                                      synset_number=connector.out_index - 1))
+
+
+def show_script(script: Sign,
+                objects_signs: Dict[str, Sign],
+                group_roles: bool = False,
+                save_to_file: bool = False,
+                ):
     net = Network(height='100%', width='100%', notebook=save_to_file, directed=False)
 
     # All possible roles
     role_int: Dict[Roles, int] = {role: i for i, role in enumerate(Roles)}
     int_role: Dict[int, Roles] = {i: role for i, role in enumerate(Roles)}
 
+    net.add_node(n_id=ScriptNode.name.value,
+                 color=ScriptNode.color.value,
+                 size=ScriptNode.size.value)
+
     # Create all sign nodes
-    for sign in script.values():
-        net.add_node(n_id=sign.name,
-                     color=SignNode.color.value,
-                     size=SignNode.size.value)
+    for i, cm in enumerate(script.significances.values()):
+        for j, event in enumerate(cm.cause):
+            sign = list(event.coincidences)[0].out_sign
+            net.add_node(n_id=sign.name,
+                         color=SignNode.color.value,
+                         size=SignNode.size.value)
+            for edge in net.edges:
+                if edge['to'] == sign.name:
+                    edge['label'] += f',{j}'
+                    break
+            net.add_edge(source=ScriptNode.name.value,
+                         to=sign.name,
+                         label=f'{j}')
+
+    for sign in objects_signs.values():
+        if sign is not None:
+            net.add_node(n_id=sign.name,
+                         color=SignNode.color.value,
+                         size=SignNode.size.value)
 
     # Create all existing definition nodes and connect them to other definitions
-    for sign in script.values():
-        for cm_index, cm in sign.significances.items():
-            name = f'{sign.name}:{cm_index}'
-            # existing definitions in current sign
-            for event_index, event in enumerate(cm.cause):
-                if len(event.coincidences):
-                    net.add_node(n_id=name,
-                                 color=SignifincanceNode.color.value,
-                                 size=SignifincanceNode.size.value)
-                    net.add_edge(source=sign.name,
-                                 to=name,
-                                 title=get_definition(lemma=sign.name,
-                                                      synset_number=cm_index - 1))
-                    if group_roles:
-                        net.add_node(n_id=f'{sign.name}:{int_role[event_index].value}',
-                                     color=RoleNode.color.value,
-                                     size=RoleNode.size.value)
-                        net.add_edge(source=name,
-                                     to=f'{sign.name}:{int_role[event_index].value}',
-                                     title=int_role[event_index].value)
+    for i, cm in script.significances.items():
+        for j, event in enumerate(cm.cause):
+            sign = list(event.coincidences)[0].out_sign
+            display_sign(net=net, sign=sign, int_role=int_role, group_roles=group_roles, step=j)
 
-                    # link to definition of role
-                    for connector in event.coincidences:
-                        out_name = f'{connector.out_sign.name}:{connector.out_index}'
-                        net.add_node(n_id=out_name,
-                                     color=SignifincanceNode.color.value,
-                                     size=SignifincanceNode.size.value)
-                        if not group_roles:
-                            net.add_edge(source=name,
-                                         to=out_name,
-                                         label=int_role[event_index].value,
-                                         color='#8FD14F' )
-                        else:
-                            net.add_edge(source=f'{sign.name}:{int_role[event_index].value}',
-                                         to=out_name,
-                                         )
-                        net.add_edge(source=connector.out_sign.name,
-                                     to=out_name,
-                                     title=get_definition(lemma=connector.out_sign.name,
-                                                          synset_number=connector.out_index - 1))
+    for sign in objects_signs.values():
+        if sign is not None:
+            display_sign(net=net, sign=sign, int_role=int_role, group_roles=group_roles)
 
-        # images
-        for cm_index, cm in sign.images.items():
-            name = f'{sign.name}:{cm_index}'
-            for event_index, event in enumerate(cm.cause):
-                if len(event.coincidences):
-                    net.add_node(n_id=name,
-                                 color=SignifincanceNode.color.value,
-                                 size=SignifincanceNode.size.value)
-                    net.add_edge(source=sign.name,
-                                 to=name,
-                                 title=get_definition(lemma=sign.name,
-                                                      synset_number=cm_index - 1))
-                for connector in event.coincidences:
-                    out_name = f'{connector.out_sign.name}:{connector.out_index}'
-                    net.add_node(n_id=out_name,
-                                 color=SignifincanceNode.color.value,
-                                 size=SignifincanceNode.size.value)
-                    net.add_edge(source=name,
-                                 to=out_name,
-                                 color="#808080")
-                    net.add_edge(source=connector.out_sign.name,
-                                 to=out_name,
-                                 title=get_definition(lemma=connector.out_sign.name,
-                                                      synset_number=connector.out_index - 1))
     net.set_options("""
     var options = {
       "physics": {
@@ -131,9 +187,11 @@ def show_script(script: Dict[str, Sign], group_roles: bool = False, save_to_file
 
 def main():
     text_info = create_text_info_restaurant()
-    script = create_signs(text_info)
 
-    show_script(script, group_roles=True)
+    actions_signs, objects_signs = create_signs(text_info)
+    script = extract_script(actions_signs, objects_signs)
+
+    show_script(script, objects_signs, group_roles=True)
 
     print("DONE")
 

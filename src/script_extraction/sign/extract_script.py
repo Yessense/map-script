@@ -216,11 +216,12 @@ def extract_script(actions_signs: List[Tuple[Sign, int]],
     pairs: Set[Tuple[int, int]] = find_connected_pairs(actions_signs, objects_signs)
     G: nx.Graph = nx.Graph(list(pairs))
     components: List = sorted(list(nx.connected_components(G)), key=len, reverse=True)
-    for component in components:
+    for component in components[:1]:
         cm = script.add_significance()
         for sign_index in component:
             action_sign, cm_index = actions_signs[sign_index]
-            cm.add_feature(action_sign.significances[cm_index + 1])
+            connector = cm.add_feature(action_sign.significances[cm_index + 1])
+            action_sign.add_out_significance(connector)
     print("Done")
 
     return script
