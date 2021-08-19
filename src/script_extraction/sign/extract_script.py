@@ -12,7 +12,7 @@ from src.script_extraction.text_preprocessing.extract_semantic_roles import extr
 from src.script_extraction.text_preprocessing.words_object import Action, Cluster, WordsObject, Obj, Roles
 from src.text_info_restaurant import create_text_info_restaurant
 from itertools import combinations
-
+import networkx as nx
 
 def create_sign(obj: Union[WordsObject, Obj, Action],
                 max_roles: int) -> Optional[Sign]:
@@ -113,9 +113,9 @@ def add_action_sign_to_script(script: Sign, action_cm: CausalMatrix) -> None:
     cm.add_feature(action_cm)
 
 
-def create_signs(text_info: Dict[str, Any]) -> Tuple[List[Sign], Dict[str, Sign]]:
+def create_signs(text_info: Dict[str, Any]) -> Tuple[List[Tuple[Sign, int]], Dict[str, Sign]]:
     # support signs
-    actions_signs: List[Sign] = []
+    actions_signs: List[Tuple[Sign, int]] = []
     objects_signs: Dict[str, Sign] = dict()
 
     # Information preparation
@@ -134,7 +134,7 @@ def create_signs(text_info: Dict[str, Any]) -> Tuple[List[Sign], Dict[str, Sign]
             continue
         action_sign: Sign = create_sign(obj=action, max_roles=len(roles_dict))
         # add_action_sign_to_script(script, action_sign.significances[action.synset_number + 1])
-        actions_signs.append(action_sign)
+        actions_signs.append((action_sign, action.synset_number))
 
         for obj in action.objects:
             # if no wordnet meanings -> no signifincances matrices ->
@@ -149,7 +149,7 @@ def create_signs(text_info: Dict[str, Any]) -> Tuple[List[Sign], Dict[str, Sign]
     for action_index, action in enumerate(actions):
         if not len(action.objects):
             continue
-        action_sign = actions_signs[action_index]
+        action_sign = actions_signs[action_index][0]
         for role_object in action.objects:
             if role_object.cluster is None:
                 add_role_object_to_action(action_sign=action_sign,
@@ -185,7 +185,7 @@ def create_signs(text_info: Dict[str, Any]) -> Tuple[List[Sign], Dict[str, Sign]
     return actions_signs, objects_signs
 
 
-def find_connected_pairs(actions_signs: List[Sign],
+def find_connected_pairs(actions_signs: List[Tuple[Sign, int]],
                          objects_signs: Dict[str, Sign]) -> Set[Tuple[int, int]]:
     pairs: Set[Tuple[int, int]] = set()
     for object_sign in objects_signs.values():
@@ -202,7 +202,7 @@ def find_connected_pairs(actions_signs: List[Sign],
                 in_signs.append(connector.in_sign)
         in_numbers = []
         for in_sign in in_signs:
-            for i, act_sign in enumerate(actions_signs):
+            for i, (act_sign, _) in enumerate(actions_signs):
                 if act_sign is in_sign:
                     in_numbers.append(i)
         for elem in combinations(in_numbers, 2):
@@ -210,14 +210,17 @@ def find_connected_pairs(actions_signs: List[Sign],
     return pairs
 
 
-def extract_script(actions_signs: List[Sign],
+def extract_script(actions_signs: List[Tuple[Sign, int]],
                    objects_signs: Dict[str, Sign]) -> Sign:
     script = Sign("script")
-
-    pairs = find_connected_pairs(actions_signs, objects_signs)
-
-
-
+    pairs: Set[Tuple[int, int]] = find_connected_pairs(actions_signs, objects_signs)
+    G: nx.Graph = nx.Graph(list(pairs))
+    components: List = sorted(list(nx.connected_components(G)), key=len, reverse=True)
+    for component in components:
+        cm = script.add_significance()
+        for sign_index in component:
+            action_sign, cm_index = actions_signs[sign_index]
+            cm.add_feature(action_sign.significances[cm_index + 1])
     print("Done")
 
     return script
@@ -227,7 +230,7 @@ def main():
     text_info = create_text_info_restaurant()
 
     actions_signs, objects_signs = create_signs(text_info)
-    extract_script(actions_signs, objects_signs)
+    script = extract_script(actions_signs, objects_signs)
     print("DONE")
 
 
