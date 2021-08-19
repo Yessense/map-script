@@ -14,6 +14,7 @@ from src.text_info_restaurant import create_text_info_restaurant
 from itertools import combinations
 import networkx as nx
 
+
 def create_sign(obj: Union[WordsObject, Obj, Action],
                 max_roles: int) -> Optional[Sign]:
     # not possible to add links to if no len
@@ -74,10 +75,11 @@ def add_role_object_to_action(action_sign: Sign,
                               role_object: Obj,
                               roles_dict: Dict[Roles, int],
                               arg_type: Optional[Roles] = None) -> None:
-    if role_object.synsets_len == -1:
+    if role_object.synsets_len == -1 or action_sign is None:
         return
     if arg_type is None:
         arg_type = role_object.arg_type
+
     action_cm: CausalMatrix = action_sign.significances[action.synset_number + 1]
     # action_cm.add_feature(script[role_object.lemma].significances[role_object.synset_number + 1])
     action_event: Event = action_cm.cause[roles_dict[arg_type]]
@@ -160,6 +162,8 @@ def create_signs(text_info: Dict[str, Any]) -> Tuple[List[Tuple[Sign, int]], Dic
 
             else:
                 for role_cluster_object in role_object.cluster.real_objects:
+                    if role_cluster_object.lemma not in objects_signs:
+                        continue
                     add_role_object_to_action(action_sign=action_sign,
                                               action=action,
                                               role_sign=objects_signs[role_cluster_object.lemma],
@@ -188,11 +192,14 @@ def create_signs(text_info: Dict[str, Any]) -> Tuple[List[Tuple[Sign, int]], Dic
 def find_connected_pairs(actions_signs: List[Tuple[Sign, int]],
                          objects_signs: Dict[str, Sign]) -> Set[Tuple[int, int]]:
     pairs: Set[Tuple[int, int]] = set()
+    possible_roles = [0, 1]
     for object_sign in objects_signs.values():
         if object_sign is None:
             continue
         in_signs: List[Sign] = []
         for connector in object_sign.out_significances:
+            if connector.in_order not in possible_roles:
+                continue
             already_in: bool = False
             for sign in in_signs:
                 if connector.in_sign is sign:
@@ -211,12 +218,15 @@ def find_connected_pairs(actions_signs: List[Tuple[Sign, int]],
 
 
 def extract_script(actions_signs: List[Tuple[Sign, int]],
-                   objects_signs: Dict[str, Sign]) -> Sign:
+                   objects_signs: Dict[str, Sign],
+                   limit: int = None) -> Sign:
     script = Sign("script")
     pairs: Set[Tuple[int, int]] = find_connected_pairs(actions_signs, objects_signs)
     G: nx.Graph = nx.Graph(list(pairs))
     components: List = sorted(list(nx.connected_components(G)), key=len, reverse=True)
-    for component in components[:1]:
+    if limit is None:
+        limit = len(components)
+    for component in components[:limit]:
         cm = script.add_significance()
         for sign_index in component:
             action_sign, cm_index = actions_signs[sign_index]

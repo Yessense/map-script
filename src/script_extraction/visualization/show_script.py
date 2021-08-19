@@ -5,6 +5,7 @@ from mapcore.swm.src.components.semnet import Sign
 from pyvis.network import Network
 
 from src.script_extraction.sign.extract_script import create_signs, extract_script
+from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 from src.script_extraction.text_preprocessing.words_object import Roles
 from src.text_info_restaurant import create_text_info_restaurant
 
@@ -47,7 +48,6 @@ def get_definition(lemma: str, synset_number: int):
 def display_sign(net: Network,
                  sign: Sign,
                  int_role: Dict[int, Roles],
-                 group_roles: bool,
                  step: Optional[int] = None):
     # for each wn meaning
     for cm_index, cm in sign.significances.items():
@@ -129,10 +129,9 @@ def display_sign(net: Network,
 
 def show_script(script: Sign,
                 objects_signs: Dict[str, Sign],
-                group_roles: bool = False,
                 save_to_file: bool = False,
                 ):
-    net = Network(height='100%', width='100%', notebook=save_to_file, directed=False)
+    net = Network(height='100%', width='100%', notebook=save_to_file, directed=True)
 
     # All possible roles
     role_int: Dict[Roles, int] = {role: i for i, role in enumerate(Roles)}
@@ -151,11 +150,11 @@ def show_script(script: Sign,
                          size=SignNode.size.value)
             for edge in net.edges:
                 if edge['to'] == sign.name:
-                    edge['label'] += f',{j}'
+                    edge['label'] += f',  {i}:{j}'
                     break
             net.add_edge(source=ScriptNode.name.value,
                          to=sign.name,
-                         label=f'{j}')
+                         label=f'{i}:{j}')
 
     for sign in objects_signs.values():
         if sign is not None:
@@ -167,11 +166,11 @@ def show_script(script: Sign,
     for i, cm in script.significances.items():
         for j, event in enumerate(cm.cause):
             sign = list(event.coincidences)[0].out_sign
-            display_sign(net=net, sign=sign, int_role=int_role, group_roles=group_roles, step=j)
+            display_sign(net=net, sign=sign, int_role=int_role, step=f'{i}:{j}')
 
     for sign in objects_signs.values():
         if sign is not None:
-            display_sign(net=net, sign=sign, int_role=int_role, group_roles=group_roles)
+            display_sign(net=net, sign=sign, int_role=int_role)
 
     net.set_options("""
     var options = {
@@ -186,12 +185,17 @@ def show_script(script: Sign,
 
 
 def main():
-    text_info = create_text_info_restaurant()
+
+    path = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/my day.txt'
+    path_john = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/john.txt'
+    files = [path]
+    text_info = extract_texts_info(files)[0]
+    # text_info = create_text_info_restaurant()
 
     actions_signs, objects_signs = create_signs(text_info)
-    script = extract_script(actions_signs, objects_signs)
+    script = extract_script(actions_signs, objects_signs, limit=None)
 
-    show_script(script, objects_signs, group_roles=True)
+    show_script(script, objects_signs, save_to_file=False)
 
     print("DONE")
 
