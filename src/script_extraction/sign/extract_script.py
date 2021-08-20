@@ -6,13 +6,14 @@ from typing import Any, Dict, List, Union, Iterable, Optional, Tuple, Set
 
 from mapcore.swm.src.components.semnet import Sign, Event, CausalMatrix, Connector
 
-from src.script_extraction.text_preprocessing.extract_clusters import extract_clusters
+from src.script_extraction.text_preprocessing.extract_clusters import extract_clusters, resolve_pronouns
 from src.script_extraction.text_preprocessing.extract_semantic_roles import extract_actions, \
     combine_actions_with_clusters
 from src.script_extraction.text_preprocessing.words_object import Action, Cluster, WordsObject, Obj, Roles
 from src.text_info_restaurant import create_text_info_restaurant
 from itertools import combinations
 import networkx as nx
+
 
 
 def create_sign(obj: Union[WordsObject, Obj, Action],
@@ -37,36 +38,6 @@ def create_sign(obj: Union[WordsObject, Obj, Action],
             for i in range(max_roles):
                 significance.add_event(event=Event(order=i))
     return sign
-
-
-# def add_new_sign(obj: Union[WordsObject, Obj, Action],
-#                  max_roles: int) -> Sign:
-#     name = obj.lemma
-#
-#     if name not in script:
-#         sign = Sign(name)
-#
-#         # add meanings and significances for each wn meaning
-#         for i in range(obj.synsets_len):
-#             image = sign.add_image(pm=None)
-#             image.add_event(event=Event(order=0))
-#             significance = sign.add_significance(pm=None)
-#
-#             # add events to action for each role
-#             if isinstance(obj, Action):
-#                 for i in range(max_roles):
-#                     significance.add_event(event=Event(order=i))
-#
-#         script[name] = sign
-#     else:
-#         # if action sign already created and has no roles
-#         if isinstance(obj, Action):
-#             sign = script[name]
-#             if len(sign.significances[1].cause) != obj.synsets_len:
-#                 for significance_number in sign.significances:
-#                     for i in range(max_roles):
-#                         sign.significances[significance_number].add_event(event=Event(order=i))
-#     return script[name]
 
 
 def add_role_object_to_action(action_sign: Sign,
@@ -124,6 +95,7 @@ def create_signs(text_info: Dict[str, Any]) -> Tuple[List[Tuple[Sign, int]], Dic
     actions: List[Action] = extract_actions(text_info)
     clusters: List[Cluster] = extract_clusters(text_info)
     combine_actions_with_clusters(actions, clusters, text_info)
+    # resolve_pronouns(clusters)
 
     # All possible roles
     roles_dict = {role: i for i, role in enumerate(Roles)}
@@ -157,14 +129,15 @@ def create_signs(text_info: Dict[str, Any]) -> Tuple[List[Tuple[Sign, int]], Dic
                 for real_obj in obj.cluster.real_objects:
                     if real_obj.lemma not in objects_signs:
                         objects_signs[real_obj.lemma] = create_sign(obj=real_obj, max_roles=len(roles_dict))
-                        for image in real_obj.images:
+                        for image in obj.cluster.images.values():
                             if image.cluster is None:
                                 if image.lemma not in objects_signs:
                                     objects_signs[image.lemma] = create_sign(obj=image, max_roles=len(roles_dict))
                             else:
                                 for real_obj in image.cluster.real_objects:
                                     if real_obj.lemma not in objects_signs:
-                                        objects_signs[real_obj.lemma] = create_sign(obj=real_obj, max_roles=len(roles_dict))
+                                        objects_signs[real_obj.lemma] = create_sign(obj=real_obj,
+                                                                                    max_roles=len(roles_dict))
 
     # add role-fillers to actions
     for action_index, action in enumerate(actions):

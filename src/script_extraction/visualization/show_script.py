@@ -131,7 +131,7 @@ def show_script(script: Sign,
                 objects_signs: Dict[str, Sign],
                 save_to_file: bool = False,
                 ):
-    net = Network(height='100%', width='100%', notebook=save_to_file, directed=True)
+    net = Network(height='100%', width='100%', notebook=save_to_file, directed=False)
 
     # All possible roles
     role_int: Dict[Roles, int] = {role: i for i, role in enumerate(Roles)}
@@ -147,7 +147,7 @@ def show_script(script: Sign,
             sign = list(event.coincidences)[0].out_sign
             net.add_node(n_id=sign.name,
                          color=SignNode.color.value,
-                         size=SignNode.size.value)
+                         size=25)
             for edge in net.edges:
                 if edge['to'] == sign.name:
                     edge['label'] += f',  {i}:{j}'
@@ -185,9 +185,8 @@ def show_script(script: Sign,
 
 
 def main():
-
-    path = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/my day.txt'
-    path_john = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/john.txt'
+    path = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/my day 1-2.txt'
+    # path_john = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/john.txt'
     files = [path]
     text_info = extract_texts_info(files)[0]
     # text_info = create_text_info_restaurant()
