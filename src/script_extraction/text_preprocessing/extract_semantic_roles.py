@@ -10,15 +10,10 @@ from src.script_extraction.text_preprocessing.extract_clusters import extract_cl
 from src.script_extraction.text_preprocessing.resolve_phrases import get_trees_list, resolve_phrases
 from src.script_extraction.text_preprocessing.words_object import Roles, POS, Action, Position, Obj, \
     WordsObject, Cluster
+
 from src.text_info_cinema import create_text_info_cinema
 from src.text_info_restaurant import create_text_info_restaurant
 
-lemmatizer = WordNetLemmatizer()
-from nltk.corpus import wordnet as wn  # type:
-from nltk.wsd import lesk
-
-
-# from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 
 def process_action(action_info: Dict, sentences_info: List[Dict[str, Any]],
                    words: List[str], sentence_number: int) -> Action:
@@ -91,18 +86,6 @@ def process_action(action_info: Dict, sentences_info: List[Dict[str, Any]],
     return action
 
 
-def add_hypernims(actions: List[Action], text_info: Dict[str, Any]):
-    # allowed_pos_types = {'NOUN': 'n', 'ADJ': 'a', 'ADV': 'r'}
-    # for action in actions:
-    #     for obj in action.objects:
-    #         if obj.pos.value in allowed_pos_types:
-    #             sent = text_info['sentences_info'][action.position.sentence_number]['semantic_roles']['words']
-    #             ss = lesk(sent, obj.text)
-    #             for hypernym in ss.hypernyms():
-    #                 obj.hypernyms.update(hypernym.lemma_names())
-    return actions
-
-
 def extract_actions(text_info: Dict) -> List[Action]:
     """
     Extract actions from each sentence in text
@@ -126,105 +109,7 @@ def extract_actions(text_info: Dict) -> List[Action]:
             actions.append(action)
     trees_list = get_trees_list(text_info)
     resolve_phrases(actions, trees_list=trees_list, text_info=text_info)
-    # actions = add_hypernims(actions, text_info)
-    # actions = assemble_actions(text_info, actions)
-    return actions
-
-
-def assemble_actions(text_info: Dict[str, Any],
-                     actions: List[Action]) -> List[Action]:
-    """
-    Create tree from actions according to syntax tree
-    Parameters
-    ----------
-    text_info: Dict[str, Any]
-    actions: List[Action]
-
-    Returns
-    out -> List[Action]
-
-    """
-    actions_dict = {action.index: action for action in actions}
-
-    root_list: List[Action] = [Action() for _ in range(len(text_info['sentences_info']))]
-
-    for i, sentence_info in enumerate(text_info['sentences_info']):
-        find_actions(sentence_number=i,
-                     node=sentence_info['dependency']['hierplane_tree']['root'],
-                     actions_dict=actions_dict,
-                     parent=root_list[i])
-
-    return list(itertools.chain(*[action.actions for action in root_list]))
-
-
-def find_actions(sentence_number, node: Dict[str, Any], actions_dict, parent: Action) -> None:
-    """
-    Find and add child actions to each action
-    """
-    index = (sentence_number, node['spans'][0]['start'], node['spans'][0]['end'])
-    if index in actions_dict:
-        if parent is not None:
-            parent.add_action(actions_dict[index])
-        parent = actions_dict[index]
-    if 'children' in node:
-        for child in node['children']:
-            find_actions(sentence_number, child, actions_dict, parent)
-
-
-def create_clusters_dict(clusters: List[Cluster]) -> Dict[Tuple[int, int, int], Cluster]:
-    clusters_dict: Dict[Tuple[int, int, int], Cluster] = dict()
-    for cluster in clusters:
-        for obj in cluster.objects:
-            clusters_dict[obj.index] = cluster
-    return clusters_dict
-
-
-def add_meanings(actions: List[Action], clusters: List[Cluster], text_info: Dict[str, Any]):
-    """
-    Resolve semantic meaning for each word
-
-    Parameters
-    ----------
-    actions
-    clusters
-    text_info
-
-    Returns
-    -------
-
-    """
-    for action in actions:
-        action.set_meaning(text_info)
-        for obj in action.objects:
-            obj.set_meaning(text_info)
-            for image in obj.images:
-                image.set_meaning(text_info)
-    for cluster in clusters:
-        for obj in cluster.objects:
-            obj.set_meaning(text_info)
-
-
-def combine_actions_with_clusters(actions: List[Action],
-                                  clusters: List[Cluster],
-                                  text_info: Dict) -> List[Action]:
-    """
-    Add cluster field for each real object in text
-    """
-    clusters_dict: Dict[Tuple[int, int, int], Cluster] = create_clusters_dict(clusters)
-
-    def process_real_obj(obj: Union[WordsObject, Obj, Action]) -> None:
-        if obj.index in clusters_dict:
-            clusters_dict[obj.index].add_real_obj(obj)
-            obj.cluster = clusters_dict[obj.index]
-
-    for action in actions:
-        process_real_obj(action)
-
-        for obj in action.objects:
-            process_real_obj(obj)
-
-            for image in obj.images:
-                process_real_obj(image)
+    # TODO: Add hypernyms
     return actions
 
 
@@ -235,8 +120,6 @@ def example_usage():
     text_info = create_text_info_restaurant()
 
     actions = extract_actions(text_info)
-    clusters = extract_clusters(text_info)
-    combine_actions_with_clusters(actions, clusters, text_info)
     print("DONE")
 
 

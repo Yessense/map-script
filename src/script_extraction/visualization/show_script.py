@@ -131,6 +131,8 @@ def show_script(script: Sign,
                 objects_signs: Dict[str, Sign],
                 save_to_file: bool = False,
                 ):
+    remove_list = ["i", "good", "good:1", "love", "mother", "musical", "favorite", "favorite:1", "tradition:1",
+                   "tradition", "film", "film:1", "popular:1", "popular", "pleasure", "once", "cinema", "father", "family"]
     net = Network(height='100%', width='100%', notebook=save_to_file, directed=False)
 
     # All possible roles
@@ -150,11 +152,11 @@ def show_script(script: Sign,
                          size=25)
             for edge in net.edges:
                 if edge['to'] == sign.name:
-                    edge['label'] += f',  {i}:{j}'
+                    edge['label'] += f',  {j}'
                     break
             net.add_edge(source=ScriptNode.name.value,
                          to=sign.name,
-                         label=f'{i}:{j}')
+                         label=f'{j}')
 
     for sign in objects_signs.values():
         if sign is not None:
@@ -166,7 +168,7 @@ def show_script(script: Sign,
     for i, cm in script.significances.items():
         for j, event in enumerate(cm.cause):
             sign = list(event.coincidences)[0].out_sign
-            display_sign(net=net, sign=sign, int_role=int_role, step=f'{i}:{j}')
+            display_sign(net=net, sign=sign, int_role=int_role, step=f'{j}')
 
     for sign in objects_signs.values():
         if sign is not None:
@@ -181,18 +183,21 @@ def show_script(script: Sign,
       }
     }
     """)
+    for node in net.nodes:
+        if node['id'] in remove_list:
+            del node
     net.show("Script.html")
 
 
 def main():
-    path = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/my day 1-2.txt'
+    path = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/cinema.txt'
     # path_john = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/john.txt'
     files = [path]
     text_info = extract_texts_info(files)[0]
     # text_info = create_text_info_restaurant()
 
     actions_signs, objects_signs = create_signs(text_info)
-    script = extract_script(actions_signs, objects_signs, limit=None)
+    script = extract_script(actions_signs, objects_signs, limit=1)
 
     show_script(script, objects_signs, save_to_file=False)
 

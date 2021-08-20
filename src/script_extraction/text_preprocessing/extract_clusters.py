@@ -8,6 +8,15 @@ from src.script_extraction.text_preprocessing.words_object import Cluster, Words
 from src.text_info_cinema import create_text_info_cinema
 from src.text_info_restaurant import create_text_info_restaurant
 
+PRON_I = {"i", "me", "my", "mine", "myself"}
+PRON_I_REPLACE = "person"
+
+PRON_WE = {"we", "us", "our", "ours", "ourselves"}
+PRON_WE_REPLACE = "people"
+
+PRON_IT = {"it", "its", "itself"}
+PRON_IT_REPLACE = "object"
+
 
 def get_sentences_bounds(text_info: Dict) -> List[Tuple[int, int]]:
     """
@@ -77,15 +86,6 @@ def extract_clusters(text_info: Dict) -> List[Cluster]:
     return clusters
 
 
-PRON_I = {"i", "me", "my", "mine", "myself"}
-PRON_I_REPLACE = "person"
-
-PRON_WE = {"we", "us", "our", "ours", "ourselves"}
-PRON_WE_REPLACE = "people"
-
-PRON_IT = {"it", "its", "itself"}
-PRON_IT_REPLACE = "object"
-
 def replace_objects_in_cluster(cluster: Cluster, replace_word: str):
     cluster.real_objects = cluster.real_objects[:1]
     cluster.real_objects[0].text = replace_word
@@ -115,14 +115,11 @@ def resolve_pronouns(clusters: List[Cluster]):
                 replace_objects_in_cluster(cluster, replace_word=PRON_IT_REPLACE)
 
 
-
-
-
 def example_usage() -> None:
     # text_info
     text_info = create_text_info_restaurant()
+
     clusters = extract_clusters(text_info)
-    # semantic_roles with coreferences
     print("DONE")
 
 
