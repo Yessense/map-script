@@ -101,19 +101,19 @@ def resolve_pronouns(clusters: List[Cluster]):
                 delete_prons = True
         if delete_prons:
             cluster.real_objects = [real_obj for real_obj in cluster.real_objects if real_obj.pos is POS.PRON]
-            return
+            continue
+        else:
+            need_to_it_replace = True
+            for real_obj in cluster.real_objects:
+                if real_obj.lemma in PRON_I:
+                    need_to_replace = False
+                    replace_objects_in_cluster(cluster, replace_word=PRON_I_REPLACE)
+                elif real_obj.lemma in PRON_WE:
+                    need_to_replace = False
+                    replace_objects_in_cluster(cluster, replace_word=PRON_WE_REPLACE)
+            if need_to_it_replace:
+                replace_objects_in_cluster(cluster, replace_word=PRON_IT_REPLACE)
 
-    for cluster in clusters:
-        need_to_it_replace = True
-        for real_obj in cluster.real_objects:
-            if real_obj.lemma in PRON_I:
-                need_to_replace = False
-                replace_objects_in_cluster(cluster, replace_word=PRON_I_REPLACE)
-            elif real_obj.lemma in PRON_WE:
-                need_to_replace = False
-                replace_objects_in_cluster(cluster, replace_word=PRON_WE_REPLACE)
-        if need_to_it_replace:
-            replace_objects_in_cluster(cluster, replace_word=PRON_IT_REPLACE)
 
 
 

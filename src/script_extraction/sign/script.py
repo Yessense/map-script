@@ -6,6 +6,7 @@ from src.script_extraction.text_preprocessing.extract_clusters import extract_cl
 from src.script_extraction.text_preprocessing.extract_semantic_roles import extract_actions, \
     combine_actions_with_clusters
 from src.script_extraction.text_preprocessing.words_object import Roles, Action, Cluster
+from src.text_info_restaurant import create_text_info_restaurant
 
 
 class Script:
@@ -16,6 +17,8 @@ class Script:
         self.objects: Dict[str, Sign] = dict()
         self.role_int: Dict[Roles, int] = {role: i for i, role in enumerate(Roles)}
 
+        self.create_signs()
+
     def create_signs(self):
         # Information preparation
         actions: List[Action] = extract_actions(self.text_info)
@@ -23,6 +26,18 @@ class Script:
         combine_actions_with_clusters(actions, clusters, self.text_info)
         resolve_pronouns(clusters)
 
+        print("Done")
 
 
 
+
+
+
+def main():
+    text_info = create_text_info_restaurant()
+
+    script = Script(text_info)
+
+
+if __name__ == '__main__':
+    main()

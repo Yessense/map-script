@@ -8,7 +8,7 @@ from nltk.stem.wordnet import WordNetLemmatizer
 
 from src.script_extraction.text_preprocessing.extract_clusters import extract_clusters
 from src.script_extraction.text_preprocessing.resolve_phrases import get_trees_list, resolve_phrases
-from src.script_extraction.text_preprocessing.words_object import Roles, POS, Action, Position, Obj,  \
+from src.script_extraction.text_preprocessing.words_object import Roles, POS, Action, Position, Obj, \
     WordsObject, Cluster
 from src.text_info_cinema import create_text_info_cinema
 from src.text_info_restaurant import create_text_info_restaurant
@@ -179,17 +179,40 @@ def create_clusters_dict(clusters: List[Cluster]) -> Dict[Tuple[int, int, int], 
     return clusters_dict
 
 
+def add_meanings(actions: List[Action], clusters: List[Cluster], text_info: Dict[str, Any]):
+    """
+    Resolve semantic meaning for each word
+
+    Parameters
+    ----------
+    actions
+    clusters
+    text_info
+
+    Returns
+    -------
+
+    """
+    for action in actions:
+        action.set_meaning(text_info)
+        for obj in action.objects:
+            obj.set_meaning(text_info)
+            for image in obj.images:
+                image.set_meaning(text_info)
+    for cluster in clusters:
+        for obj in cluster.objects:
+            obj.set_meaning(text_info)
+
+
 def combine_actions_with_clusters(actions: List[Action],
                                   clusters: List[Cluster],
                                   text_info: Dict) -> List[Action]:
     """
-    For each object in cluster add it images to cluster
-    Then add field `cluster` to obj
+    Add cluster field for each real object in text
     """
     clusters_dict: Dict[Tuple[int, int, int], Cluster] = create_clusters_dict(clusters)
 
     def process_real_obj(obj: Union[WordsObject, Obj, Action]) -> None:
-        obj.set_meaning(text_info)
         if obj.index in clusters_dict:
             clusters_dict[obj.index].add_real_obj(obj)
             obj.cluster = clusters_dict[obj.index]

@@ -48,7 +48,6 @@ class Roles(Enum):
     NAMED_GROUP = "NAMED-GROUP"
 
 
-
 class POS(Enum):
     """
     Part of speech enum
@@ -261,6 +260,24 @@ class Action(WordsObject):
 
     def add_obj(self, obj: Obj) -> None:
         self.objects.append(obj)
+
+    def is_script_step(self) -> bool:
+        """
+        If has roles -> script step
+        Returns
+        -------
+        bool
+        """
+        if self.cluster is None:
+            return len(self.objects) != 0
+        else:
+            for real_object in self.cluster.real_objects:
+                if isinstance(real_object, Action) and len(self.objects):
+                    return True
+            return False
+
+
+
 
 
 @dataclass
