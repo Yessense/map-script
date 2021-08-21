@@ -17,6 +17,8 @@ PRON_WE_REPLACE = "people"
 PRON_IT = {"it", "its", "itself"}
 PRON_IT_REPLACE = "object"
 
+REMOVE_PRONS_POS = {POS.NOUN, POS.VERB}
+
 
 def get_sentences_bounds(text_info: Dict) -> List[Tuple[int, int]]:
     """
@@ -87,29 +89,30 @@ def extract_clusters(text_info: Dict) -> List[Cluster]:
 
 
 def replace_objects_in_cluster(cluster: Cluster, replace_word: str):
-    cluster.real_objects = cluster.real_objects[:1]
-    cluster.real_objects[0].text = replace_word
-    cluster.real_objects[0].pos = POS.NOUN
+    cluster.objects = cluster.objects[:1]
+    cluster.objects[0].text = replace_word
+    cluster.objects[0].pos = POS.NOUN
 
 
 def resolve_pronouns(clusters: List[Cluster]):
     # If there is NOUN, remove all
     for cluster in clusters:
         delete_prons: bool = False
-        for real_obj in cluster.real_objects:
-            if real_obj.pos is POS.NOUN or real_obj.pos is POS.VERB:
+        for obj in cluster.objects:
+            if obj.pos in REMOVE_PRONS_POS:
                 delete_prons = True
         if delete_prons:
-            cluster.real_objects = [real_obj for real_obj in cluster.real_objects if real_obj.pos is POS.PRON]
+            cluster.objects = [obj for obj in cluster.objects if obj.pos is not POS.PRON]
             continue
+    # only PRONS
         else:
             need_to_it_replace = True
-            for real_obj in cluster.real_objects:
-                if real_obj.lemma in PRON_I:
-                    need_to_replace = False
+            for obj in cluster.objects:
+                if obj.lemma in PRON_I:
+                    need_to_it_replace = False
                     replace_objects_in_cluster(cluster, replace_word=PRON_I_REPLACE)
-                elif real_obj.lemma in PRON_WE:
-                    need_to_replace = False
+                elif obj.lemma in PRON_WE:
+                    need_to_it_replace = False
                     replace_objects_in_cluster(cluster, replace_word=PRON_WE_REPLACE)
             if need_to_it_replace:
                 replace_objects_in_cluster(cluster, replace_word=PRON_IT_REPLACE)

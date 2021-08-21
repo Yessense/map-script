@@ -55,6 +55,7 @@ def combine_actions_with_clusters(actions: List[Action],
     """
     Add cluster field for each real object in text
     """
+    add_meanings(actions, clusters, text_info)
     clusters_dict: Dict[Tuple[int, int, int], Cluster] = create_clusters_dict(clusters)
 
     def process_real_obj(obj: Union[WordsObject, Obj, Action]) -> None:

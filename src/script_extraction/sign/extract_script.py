@@ -75,7 +75,7 @@ def add_image_to_object(object_sign: Sign,
         # connector to image
         connector: Connector = Connector(in_sign=object_sign,
                                          out_sign=image_sign,
-                                         in_index=obj.synset_number + 1,  # obj images number
+                                         in_index=obj.synset_number + 1,  # action images number
                                          out_index=image.synset_number + 1,  # image images number
                                          in_order=0)
         obj_image_event.add_coincident(base='image', connector=connector)

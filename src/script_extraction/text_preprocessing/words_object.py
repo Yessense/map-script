@@ -229,6 +229,10 @@ class WordsObject:
                                                                  pos=POS_FOR_LEM.get(self.pos, None))
 
     @property
+    def has_valid_meanings(self):
+        return self._synsets_len != -1
+
+    @property
     def synsets_len(self):
         return self._synsets_len
 
@@ -275,9 +279,6 @@ class Action(WordsObject):
                 if isinstance(real_object, Action) and len(self.objects):
                     return True
             return False
-
-
-
 
 
 @dataclass

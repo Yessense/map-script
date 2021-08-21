@@ -55,7 +55,7 @@ def resolve_phrases(items: List[Union[Action, Cluster]],
 def select_new_objects(candidates_for_obj: List[Tuple[int, WordsObject]],
                        min_level: int) -> List[WordsObject]:
     """
-    Apply restrictions to candidates for obj in phrase
+    Apply restrictions to candidates for action in phrase
     Usually its lowest level candidates
     Parameters
     ----------
@@ -134,7 +134,7 @@ def find_object(obj: Obj,  # part-of-phrase object
                 node: Dict[str, Any],
                 objects: Optional[List[Dict[str, any]]] = None) -> List[Dict[str, Any]]:
     """
-    Recursive function to find node at same position as `obj`
+    Recursive function to find node at same position as `action`
     Parameters
     ----------
     obj: Obj
