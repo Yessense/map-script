@@ -1,5 +1,5 @@
 """
-Add roles, clusters
+Add roles, _clusters
 """
 from typing import Dict, List, Any, Tuple
 
@@ -46,7 +46,7 @@ def get_sentences_bounds(text_info: Dict) -> List[Tuple[int, int]]:
 
 def extract_clusters(text_info: Dict) -> List[Cluster]:
     """
-    Collect info about clusters in one list
+    Collect info about _clusters in one list
     Parameters
     ----------
     text_info: Dict
@@ -60,7 +60,7 @@ def extract_clusters(text_info: Dict) -> List[Cluster]:
 
     sentences_bounds = get_sentences_bounds(text_info)
 
-    for cluster_index, cluster_info in enumerate(text_info['coreferences']['clusters']):
+    for cluster_index, cluster_info in enumerate(text_info['coreferences']['_clusters']):
         cluster = Cluster()
         for entry in cluster_info:
             for sentence_number, sentence in enumerate(text_info['sentences_info']):
@@ -90,7 +90,7 @@ def extract_clusters(text_info: Dict) -> List[Cluster]:
 
 def replace_objects_in_cluster(cluster: Cluster, replace_word: str):
     cluster.objects = cluster.objects[:1]
-    cluster.objects[0].text = replace_word
+    cluster.objects[0]._lemma = replace_word
     cluster.objects[0].pos = POS.NOUN
 
 
@@ -119,7 +119,7 @@ def resolve_pronouns(clusters: List[Cluster]):
 
 
 def example_usage() -> None:
-    # text_info
+    # _text_info
     text_info = create_text_info_restaurant()
 
     clusters = extract_clusters(text_info)

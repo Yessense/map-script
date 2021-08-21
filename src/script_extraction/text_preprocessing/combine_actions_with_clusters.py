@@ -73,7 +73,7 @@ def combine_actions_with_clusters(actions: List[Action],
 
 
 def example_usage() -> None:
-    # text_info
+    # _text_info
     text_info = create_text_info_restaurant()
 
     actions = extract_actions(text_info)

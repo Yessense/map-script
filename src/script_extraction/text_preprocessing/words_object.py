@@ -173,7 +173,7 @@ class Position:
 @dataclass
 class WordsObject:
     """
-    Base class for any words objects
+    Base class for any words objects_signs
     """
     text: str = ""
     position: Position = Position()
@@ -255,7 +255,7 @@ class Obj(WordsObject):
 class Action(WordsObject):
     """
     Contains information for action sign
-    Roles, objects, children Actions
+    Roles, objects_signs, children Actions
     """
     objects: List[Obj] = field(default_factory=list)
 
@@ -288,7 +288,7 @@ class Cluster:
     """
     # named group - allenlp coreferences out
     objects: List[Obj] = field(default_factory=list)
-    # according to cluster objects, real objects
+    # according to cluster objects_signs, real objects_signs
     real_objects: List[Union[WordsObject, Obj, Action]] = field(default_factory=list)
     images: Dict[Tuple[int, int, int], WordsObject] = field(default_factory=dict)
 

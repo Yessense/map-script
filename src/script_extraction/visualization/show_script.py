@@ -194,7 +194,7 @@ def main():
     # path_john = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/john.txt'
     files = [path]
     text_info = extract_texts_info(files)[0]
-    # text_info = create_text_info_restaurant()
+    # _text_info = create_text_info_restaurant()
 
     actions_signs, objects_signs = create_signs(text_info)
     script = extract_script(actions_signs, objects_signs, limit=1)

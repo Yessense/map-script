@@ -95,7 +95,7 @@ def create_signs(text_info: Dict[str, Any]) -> Tuple[List[Tuple[Sign, int]], Dic
     actions: List[Action] = extract_actions(text_info)
     clusters: List[Cluster] = extract_clusters(text_info)
     combine_actions_with_clusters(actions, clusters, text_info)
-    # resolve_pronouns(clusters)
+    # resolve_pronouns(_clusters)
 
     # All possible roles
     roles_dict = {role: i for i, role in enumerate(Roles)}
@@ -139,7 +139,7 @@ def create_signs(text_info: Dict[str, Any]) -> Tuple[List[Tuple[Sign, int]], Dic
                                         objects_signs[real_obj.lemma] = create_sign(obj=real_obj,
                                                                                     max_roles=len(roles_dict))
 
-    # add role-fillers to actions
+    # add role-fillers to actions_signs
     for action_index, action in enumerate(actions):
         if not len(action.objects):
             continue

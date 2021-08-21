@@ -88,8 +88,8 @@ def process_action(action_info: Dict, sentences_info: List[Dict[str, Any]],
 
 def extract_actions(text_info: Dict) -> List[Action]:
     """
-    Extract actions from each sentence in text
-    and return list of actions
+    Extract actions_signs from each sentence in text
+    and return list of actions_signs
     Parameters
     ----------
     text_info
@@ -114,9 +114,9 @@ def extract_actions(text_info: Dict) -> List[Action]:
 
 
 def example_usage():
-    # text_info
+    # _text_info
     # filename = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/restaurant.txt'
-    # text_info = extract_texts_info([filename])[0]
+    # _text_info = extract_texts_info([filename])[0]
     text_info = create_text_info_restaurant()
 
     actions = extract_actions(text_info)

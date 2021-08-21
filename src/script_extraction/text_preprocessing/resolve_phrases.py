@@ -24,7 +24,7 @@ def resolve_phrases(items: List[Union[Action, Cluster]],
                         test_candidates_for_obj.append(words_obj)
 
 
-                # removing phrase from .objects
+                # removing phrase from .objects_signs
                 item.objects[i] = None
 
                 # if there are accepted candidates
@@ -47,7 +47,7 @@ def resolve_phrases(items: List[Union[Action, Cluster]],
                     for phrase_shard in new_objects:
                         phrase_shard.images = find_object_images(obj, phrase_shard, text_info=text_info)
                     item.objects.extend(new_objects)
-        # delete None objects (phrases)
+        # delete None objects_signs (phrases)
         item.objects = [obj for obj in item.objects if obj is not None]
     return items
 
