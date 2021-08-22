@@ -1,3 +1,4 @@
+import itertools
 from itertools import combinations
 from typing import List, Tuple, Dict, Any, Union, Optional, Set
 
@@ -54,7 +55,7 @@ class Script:
         self._actions_significance_number.append(action.synset_number)
 
     def _add_object_sign(self, obj: Union[WordsObject, Obj]) -> None:
-        if obj.lemma in self.objects_signs:
+        if obj.lemma in self.objects_signs or not obj.has_valid_meanings:
             return
         name = obj.lemma
 
@@ -211,7 +212,17 @@ class Script:
         pairs = self.find_connected_pairs()
 
         G: nx.Graph = nx.Graph(list(pairs))
+
+        # connected components in graph
         components: List = sorted(list(nx.connected_components(G)), key=len, reverse=True)
+
+        # add signle nodes
+        single_nodes = [{node_number} for node_number
+                        in range(len(self.actions_signs))
+                        if node_number not in list(itertools.chain(*components))]
+        components += single_nodes
+
+        # restriction to script nodes length
         if limit is None:
             limit = len(components)
         for component in components[:limit]:
