@@ -5,6 +5,7 @@ from mapcore.swm.src.components.semnet import Sign
 from pyvis.network import Network
 
 from src.script_extraction.sign.extract_script import create_signs, extract_script
+from src.script_extraction.sign.script import Script
 from src.script_extraction.text_preprocessing.extract_texts_info import extract_texts_info
 from src.script_extraction.text_preprocessing.words_object import Roles
 from src.text_info_restaurant import create_text_info_restaurant
@@ -131,8 +132,6 @@ def show_script(script: Sign,
                 objects_signs: Dict[str, Sign],
                 save_to_file: bool = False,
                 ):
-    remove_list = ["i", "good", "good:1", "love", "mother", "musical", "favorite", "favorite:1", "tradition:1",
-                   "tradition", "film", "film:1", "popular:1", "popular", "pleasure", "once", "cinema", "father", "family"]
     net = Network(height='100%', width='100%', notebook=save_to_file, directed=False)
 
     # All possible roles
@@ -152,7 +151,7 @@ def show_script(script: Sign,
                          size=25)
             for edge in net.edges:
                 if edge['to'] == sign.name:
-                    edge['label'] += f',  {j}'
+                    edge['label'] += f', {i}:{j}'
                     break
             net.add_edge(source=ScriptNode.name.value,
                          to=sign.name,
@@ -190,16 +189,15 @@ def show_script(script: Sign,
 
 
 def main():
-    path = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/cinema.txt'
-    # path_john = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/john.txt'
-    files = [path]
-    text_info = extract_texts_info(files)[0]
-    # _text_info = create_text_info_restaurant()
+    # path = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/cinema.txt'
+    path_john = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/john.txt'
+    # files = [path]
+    # text_info = extract_texts_info(files)[0]
+    _text_info = create_text_info_restaurant()
 
-    actions_signs, objects_signs = create_signs(text_info)
-    script = extract_script(actions_signs, objects_signs, limit=1)
+    script = Script(_text_info)
 
-    show_script(script, objects_signs, save_to_file=False)
+    show_script(script.sign, script.objects_signs, save_to_file=False)
 
     print("DONE")
 

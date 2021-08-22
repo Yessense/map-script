@@ -95,7 +95,6 @@ class Script:
             if not action.is_script_step() or not action.has_valid_meanings:
                 continue
             self._add_action_sign(action=action)
-            self._actions_significance_number.append(action.synset_number)
 
             for obj in action.objects:
                 self._process_object(obj)
@@ -184,9 +183,8 @@ class Script:
         pairs: Set[Tuple[int, ...]] = set()
 
         for object_sign in self.objects_signs.values():
-            if object_sign is None:
-                continue
             in_signs: List[Sign] = []
+            # look for all actions, connected to this object
             for connector in object_sign.out_significances:
                 if connector.in_order not in self.possible_roles:
                     continue
@@ -197,11 +195,13 @@ class Script:
                     break
                 if not already_in:
                     in_signs.append(connector.in_sign)
+            # get actions numbers
             in_numbers = []
             for in_sign in in_signs:
                 for i, act_sign in enumerate(self.actions_signs):
                     if act_sign is in_sign:
                         in_numbers.append(i)
+            # create pairs
             for elem in combinations(in_numbers, 2):
                 pairs.add(elem)
         self._connected_pairs = pairs
@@ -218,9 +218,10 @@ class Script:
             cm = self.sign.add_significance()
             for sign_index in component:
                 action_sign = self.actions_signs[sign_index]
-                cm_index = self._actions_significance_number[sign_index]
+                cm_index: int = self._actions_significance_number[sign_index]
                 connector = cm.add_feature(action_sign.significances[cm_index + 1])
                 action_sign.add_out_significance(connector)
+        return self.sign
 
 
 
