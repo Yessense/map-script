@@ -9,7 +9,7 @@ from src.script_extraction.text_preprocessing.combine_actions_with_clusters impo
 from src.script_extraction.text_preprocessing.extract_clusters import extract_clusters, resolve_pronouns
 from src.script_extraction.text_preprocessing.extract_semantic_roles import extract_actions
 from src.script_extraction.text_preprocessing.words_object import Roles, Action, Cluster, Obj, WordsObject
-from src.text_info_restaurant import create_text_info_restaurant
+from src.script_extraction.samples.text_info.text_info_restaurant import create_text_info_restaurant
 
 
 class Script:
@@ -233,9 +233,6 @@ class Script:
                 connector = cm.add_feature(action_sign.significances[cm_index + 1])
                 action_sign.add_out_significance(connector)
         return self.sign
-
-
-
 
 
 def main():

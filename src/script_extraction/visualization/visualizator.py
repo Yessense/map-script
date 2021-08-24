@@ -1,12 +1,12 @@
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 
 from mapcore.swm.src.components.semnet import Sign, Connector
 from pyvis.network import Network
 
 from src.script_extraction.sign.script import Script
 from src.script_extraction.text_preprocessing.words_object import Roles
-from src.text_info_restaurant import create_text_info_restaurant
+from src.script_extraction.samples.text_info.text_info_restaurant import create_text_info_restaurant
 
 from nltk.corpus import wordnet as wn
 

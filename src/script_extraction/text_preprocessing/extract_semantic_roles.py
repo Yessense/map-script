@@ -1,18 +1,10 @@
-import dataclasses
-from dataclasses import field
-from typing import List, Any, Tuple, Dict, Set, Union
-from enum import Enum
+from typing import List, Any, Dict
 import re
-import itertools
-from nltk.stem.wordnet import WordNetLemmatizer
 
-from src.script_extraction.text_preprocessing.extract_clusters import extract_clusters
 from src.script_extraction.text_preprocessing.resolve_phrases import get_trees_list, resolve_phrases
-from src.script_extraction.text_preprocessing.words_object import Roles, POS, Action, Position, Obj, \
-    WordsObject, Cluster
+from src.script_extraction.text_preprocessing.words_object import Roles, Action, Position, Obj
 
-from src.text_info_cinema import create_text_info_cinema
-from src.text_info_restaurant import create_text_info_restaurant
+from src.script_extraction.samples.text_info.text_info_restaurant import create_text_info_restaurant
 
 
 def process_action(action_info: Dict, sentences_info: List[Dict[str, Any]],

@@ -1,12 +1,11 @@
 """
 Add roles, _clusters
 """
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Tuple
 
 from src.script_extraction.text_preprocessing.resolve_phrases import resolve_phrases, get_trees_list
-from src.script_extraction.text_preprocessing.words_object import Cluster, WordsObject, Position, Obj, Roles, POS
-from src.text_info_cinema import create_text_info_cinema
-from src.text_info_restaurant import create_text_info_restaurant
+from src.script_extraction.text_preprocessing.words_object import Cluster, Position, Obj, Roles, POS
+from src.script_extraction.samples.text_info.text_info_restaurant import create_text_info_restaurant
 
 PRON_I = {"i", "me", "my", "mine", "myself"}
 PRON_I_REPLACE = "person"
