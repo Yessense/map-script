@@ -55,10 +55,10 @@ def get_predictors():
     return predictors
 
 
-def get_text_info(filename, predictors):
+def get_text_info(filenameш, predictors):
     """
     Retrieves info from one file:
-    Coreference in all text
+    Coreferences in all text
 
     semantic role: verbs and their arguments
     dependency: full tree
