@@ -1,8 +1,8 @@
 from typing import List, Any, Dict
 import re
 
-from src.script_extraction.text_preprocessing.resolve_phrases import get_trees_list, resolve_phrases
-from src.script_extraction.text_preprocessing.words_object import Roles, Action, Position, Obj
+from src.script_extraction.preprocessing.resolve_phrases import get_trees_list, resolve_phrases
+from src.script_extraction.preprocessing.words_object import Roles, Action, Position, Obj
 
 from src.script_extraction.samples.text_info.text_info_restaurant import create_text_info_restaurant
 

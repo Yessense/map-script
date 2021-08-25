@@ -1,14 +1,13 @@
 from enum import Enum
 from typing import Optional, Dict
 
+import nltk.corpus
 from mapcore.swm.src.components.semnet import Sign, Connector
 from pyvis.network import Network
 
 from src.script_extraction.sign.script import Script
-from src.script_extraction.text_preprocessing.words_object import Roles
+from src.script_extraction.preprocessing.words_object import Roles
 from src.script_extraction.samples.text_info.text_info_restaurant import create_text_info_restaurant
-
-from nltk.corpus import wordnet as wn
 
 
 class ScriptNode(Enum):
@@ -36,8 +35,10 @@ class RoleNode(Enum):
     color = '#8FD14F'
     size = 13
 
+
 class ImageEdge(Enum):
     color = "#808080"
+
 
 class Visualizator:
     def __init__(self, script: Script,
@@ -54,6 +55,7 @@ class Visualizator:
         self.role_int: Dict[Roles, int] = {role: i for i, role in enumerate(Roles)}
         self.int_role: Dict[int, Roles] = {i: role for i, role in enumerate(Roles)}
 
+        # add objects to self.net
         self.create_script_node()
         self.create_script_step_nodes()
         self.create_objects_nodes()
@@ -110,11 +112,10 @@ class Visualizator:
             name = f'{ScriptNode.name.value}:{i}'
             self.net.add_node(n_id=name,
                               color=ScriptNode.color.value,
-                              size=ScriptNode.size.value-3)
+                              size=ScriptNode.size.value - 3)
             self.net.add_edge(source=ScriptNode.name.value,
                               to=name,
                               label=f'{len(significance.cause)} steps')
-
 
     def create_objects_nodes(self):
         for sign in self.objects_signs.values():
@@ -134,7 +135,7 @@ class Visualizator:
         """)
 
     def _process_connector(self, connector: Connector,
-                             image: Optional[bool] = False):
+                           image: Optional[bool] = False):
         # names
         out_name: str = connector.out_sign.name
         in_name: str = connector.in_sign.name
@@ -173,9 +174,10 @@ class Visualizator:
             for connector in object_sign.out_images:
                 self._process_connector(connector, image=True)
 
-    def get_definition(self, lemma: str, synset_number: int):
+    @staticmethod
+    def get_definition(lemma: str, synset_number: int):
         # all possible synsets
-        synsets = wn.synsets(lemma)
+        synsets = nltk.corpus.wordnet.synsets(lemma)
 
         if not len(synsets):
             return "Unique"

@@ -3,8 +3,8 @@ Add roles, _clusters
 """
 from typing import Dict, List, Tuple
 
-from src.script_extraction.text_preprocessing.resolve_phrases import resolve_phrases, get_trees_list
-from src.script_extraction.text_preprocessing.words_object import Cluster, Position, Obj, Roles, POS
+from src.script_extraction.preprocessing.resolve_phrases import resolve_phrases, get_trees_list
+from src.script_extraction.preprocessing.words_object import Cluster, Position, Obj, Roles, POS
 from src.script_extraction.samples.text_info.text_info_restaurant import create_text_info_restaurant
 
 PRON_I = {"i", "me", "my", "mine", "myself"}
