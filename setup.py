@@ -9,7 +9,7 @@ with open(file="README.md", mode="r") as readme_handle:
 
 
 setup(
-    name='script-extract',
+    name='map-script',
 
     author='Alexander Korchemnyi',
     author_email='akorchemnyj@gmail.com',
@@ -23,8 +23,8 @@ setup(
     url='https://github.com/Yessense/map-script',
 
 
-    packages=["script_extraction", "script_extraction.sign", "script_extraction.preprocessing",
-                "script_extraction.visualization"],
+    packages=["map-script", "map-script.sign", "map-script.preprocessing",
+                "map-script.visualization"],
     package_dir={'': 'src'},
 
     install_requires=requirements,
