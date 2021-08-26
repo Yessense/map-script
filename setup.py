@@ -25,7 +25,7 @@ setup(
 
     packages=["script_extraction", "script_extraction.sign", "script_extraction.preprocessing",
                 "script_extraction.visualization"],
-    package_Dir={'': 'src'},
+    package_dir={'': 'src'},
 
     install_requires=requirements,
     include_package_data=True,
