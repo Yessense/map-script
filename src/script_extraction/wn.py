@@ -9,29 +9,51 @@ from nltk.wsd import lesk
 
 def get_meaning(sentence: List[str], lemma: str, pos: str) -> Tuple[int, int]:
     synsets: List[Synset] = wn.synsets(lemma)
+
+    # word not represented in dict
+    if not len(synsets):
+        return 1, 0
+    # word has only one meaning
+    elif len(synsets) == 1:
+        return 1, 0
+
     synset: Synset = lesk(context_sentence=sentence,
                           ambiguous_word=lemma,
                           pos=pos,
                           synsets=synsets)
     if synset is None:
-        return -1, -1
+        # check for 's' pos
+        if pos == 'a':
+            synset = lesk(context_sentence=sentence,
+                          ambiguous_word=lemma,
+                          pos=pos,
+                          synsets=synsets)
+            if synset is None:
+                return -1, -1
+        else:
+            return -1, -1
+
     name = synset.name()
 
     for i, ss in enumerate(synsets):
         if ss.name() == name:
             return len(synsets), i
+
     return -1, -1
 
-if __name__ == '__main__':
+
+def example_usage():
     sent = ['We', 'choose', 'movie', 'for', 'the', 'family', ',', 'we', 'need', 'something', 'pleasant', ',', 'amusing',
             'and', 'funny', '.']
 
+    # stack overflow
     for i, j in enumerate(wn.synsets('family')):
         print('Meaning', i, 'NLTK ID', j.name())
         print('Definition:', j.definition())
         print('Hypernyms:', ', '.join(list(chain(*[l.lemma_names() for l in j.hypernyms()]))))
 
     ss = lesk(sent, 'family')
+
     lemmas = set()
 
     for hyper in ss.hypernyms():
@@ -42,10 +64,14 @@ if __name__ == '__main__':
 
     result = get_meaning(sent, 'go', 'v')
 
-
-    sent = ['Even', 'though', 'it', 'must', 'have', 'been', 'very', 'time', '-', 'consuming', 'to', 'prepare', ',', 'it', 'was', 'a', 'delight', 'to', 'see', ',', 'and', 'I', 'had', 'a', 'second', 'helping', '.']
+    sent = ['Even', 'though', 'it', 'must', 'have', 'been', 'very', 'time', '-', 'consuming', 'to', 'prepare', ',',
+            'it', 'was', 'a', 'delight', 'to', 'see', ',', 'and', 'I', 'had', 'a', 'second', 'helping', '.']
     lemma = 'must'
-    synsets = wn.synsets('restaurant')
+    synsets = wn.synsets('i')
 
-    result = lesk(sent, lemma, pos='v', synsets=synsets)
+    result = lesk(sent, lemma, synsets=synsets)
     print("Done")
+
+
+if __name__ == '__main__':
+    example_usage()
