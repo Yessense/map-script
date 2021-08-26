@@ -55,7 +55,7 @@ def get_predictors():
     return predictors
 
 
-def get_text_info(filenameш, predictors):
+def get_text_info(filename, predictors):
     """
     Retrieves info from one file:
     Coreferences in all text
