@@ -59,7 +59,7 @@ def extract_clusters(text_info: Dict) -> List[Cluster]:
 
     sentences_bounds = get_sentences_bounds(text_info)
 
-    for cluster_index, cluster_info in enumerate(text_info['coreferences']['_clusters']):
+    for cluster_index, cluster_info in enumerate(text_info['coreferences']['clusters']):
         cluster = Cluster()
         for entry in cluster_info:
             for sentence_number, sentence in enumerate(text_info['sentences_info']):
