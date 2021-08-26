@@ -24,7 +24,7 @@ setup(
 
 
     packages=["mapscript",  "mapscript.preprocessing",
-                "mapscript.visualization"],
+                "mapscript.visualization", "mapscript.samples"],
     package_dir={'': 'src'},
 
     install_requires=requirements,
