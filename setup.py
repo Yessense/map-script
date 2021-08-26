@@ -23,8 +23,8 @@ setup(
     url='https://github.com/Yessense/map-script',
 
 
-    packages=["map_script", "map_script.sign", "map_script.preprocessing",
-                "map_script.visualization"],
+    packages=["mapscript", "mapscript.sign", "mapscript.preprocessing",
+                "mapscript.visualization"],
     package_dir={'': 'src'},
 
     install_requires=requirements,
