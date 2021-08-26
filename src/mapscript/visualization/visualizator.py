@@ -5,9 +5,9 @@ import nltk.corpus
 from mapcore.swm.src.components.semnet import Sign, Connector
 from pyvis.network import Network
 
-from src.script_extraction.sign.script import Script
-from src.script_extraction.preprocessing.words_object import Roles
-from src.script_extraction.samples.text_info.text_info_restaurant import create_text_info_restaurant
+from ..script import Script
+from ..preprocessing.words_object import Roles
+from ..samples.text_info.text_info_restaurant import create_text_info_restaurant
 
 
 class ScriptNode(Enum):

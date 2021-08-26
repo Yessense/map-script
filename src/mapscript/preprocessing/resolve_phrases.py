@@ -1,6 +1,6 @@
 from typing import List, Union, Tuple, Dict, Any, Optional
 
-from src.script_extraction.preprocessing.words_object import Action, WordsObject, POS, Obj, Position, Cluster
+from .words_object import Action, WordsObject, POS, Obj, Position, Cluster
 
 
 def resolve_phrases(items: List[Union[Action, Cluster]],

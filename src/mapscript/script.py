@@ -5,11 +5,11 @@ from typing import List, Tuple, Dict, Any, Union, Optional, Set
 import networkx as nx
 from mapcore.swm.src.components.semnet import Sign, Event, CausalMatrix, Connector
 
-from src.script_extraction.preprocessing.combine_actions_with_clusters import combine_actions_with_clusters
-from src.script_extraction.preprocessing.extract_clusters import extract_clusters, resolve_pronouns
-from src.script_extraction.preprocessing.extract_semantic_roles import extract_actions
-from src.script_extraction.preprocessing.words_object import Roles, Action, Cluster, Obj, WordsObject
-from src.script_extraction.samples.text_info.text_info_restaurant import create_text_info_restaurant
+from .preprocessing.combine_actions_with_clusters import combine_actions_with_clusters
+from .preprocessing.extract_clusters import extract_clusters, resolve_pronouns
+from .preprocessing.extract_semantic_roles import extract_actions
+from .preprocessing.words_object import Roles, Action, Cluster, Obj, WordsObject
+from .samples.text_info.text_info_restaurant import create_text_info_restaurant
 
 
 class Script:

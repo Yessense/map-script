@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Tuple, Any, List, Dict, Union, Optional, Set
 from nltk.stem.wordnet import WordNetLemmatizer
 
-from src.script_extraction.wn import get_meaning
+from .wn import get_meaning
 
 lemmatizer = WordNetLemmatizer()
 
