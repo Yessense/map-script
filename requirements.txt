@@ -1,6 +1,5 @@
 allennlp==2.1.0
 allennlp-models==2.1.0
-git+https://github.com/cog-isa/map-core.git
 networkx~=2.6.2
 mapcore~=1.0.0
 nltk~=3.6.2
