@@ -20,7 +20,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
 
-    url='https://github.com/Yessense/script-extract',
+    url='https://github.com/Yessense/map-script',
 
 
     packages=["script_extraction", "script_extraction.sign", "script_extraction.preprocessing",
