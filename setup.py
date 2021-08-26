@@ -9,7 +9,7 @@ with open(file="README.md", mode="r") as readme_handle:
 
 
 setup(
-    name='map-script',
+    name='map_script',
 
     author='Alexander Korchemnyi',
     author_email='akorchemnyj@gmail.com',
