@@ -16,7 +16,7 @@ PRON_WE_REPLACE = "people"
 PRON_IT = {"it", "its", "itself"}
 PRON_IT_REPLACE = "object"
 
-REMOVE_PRONS_POS = {POS.NOUN, POS.VERB}
+REMOVE_PRONS_POS = {POS.NOUN, POS.VERB, POS.PROPN}
 
 
 def get_sentences_bounds(text_info: Dict) -> List[Tuple[int, int]]:
