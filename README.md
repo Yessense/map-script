@@ -14,14 +14,21 @@ Do the following steps:
 ## Example usage
 
 
+```python
+from mapscript.preprocessing.extract_texts_info import extract_texts_info
+from mapscript.script import Script
+from mapscript.visualization.visualizator import Visualizator
 
-<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
-<foreignObject width="100" height="100">
-    <div xmlns="http://www.w3.org/1999/xhtml">
-        <ul>
-            <li>text</li>
-        </ul>
-        <!-- Other embed HTML element/text into SVG -->
-    </div>
-</foreignObject>
-</svg>
+filepath = 'my_text.txt'
+text_info = extract_texts_info([filepath])[0]
+
+script = Script(text_info)
+
+# script visualization
+vis = Visualizator(script, save_to_file=False)
+vis.show()
+```
+
+## Visualization
+
+![](./example_usage/Script.html)
