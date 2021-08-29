@@ -1,6 +1,9 @@
 import logging
 import os
+import os.path
+import sys
 import pickle
+from pathlib import Path
 from typing import List, Dict
 from allennlp.predictors.predictor import Predictor
 import nltk.data # type: ignore
@@ -103,12 +106,12 @@ def get_text_info(filename, predictors):
     return text_info
 
 
-def extract_texts_info(files=None, saved_files_dir: str = None) -> List[Dict]:
+def extract_texts_info(files=None, processed_cache: str = None) -> List[Dict]:
     """
     Retrieves info from each file
     Parameters
     ----------
-    saved_files_dir: str
+    processed_cache: str
     files: list of str
 
     Returns
@@ -121,8 +124,10 @@ def extract_texts_info(files=None, saved_files_dir: str = None) -> List[Dict]:
         files = []
     if not len(files):
         return []
-    if saved_files_dir is None:
-        saved_files_dir = "/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/saved/"
+    if processed_cache is None:
+        processed_cache = os.path.join(os.path.dirname(sys.modules['__main__'].__file__), ".processed_cache")
+    if not os.path.exists(processed_cache):
+        os.makedirs(processed_cache)
 
     predictors = None
     logging.info("-" * 40)
@@ -130,17 +135,17 @@ def extract_texts_info(files=None, saved_files_dir: str = None) -> List[Dict]:
     logging.info("-" * 40)
     texts_info = []
 
-    saved_files = [os.path.basename(f) for f in os.listdir(saved_files_dir)]
+    saved_files = [os.path.basename(f) for f in os.listdir(processed_cache)]
     for filepath in files:
         h = hashlib.sha1(filepath.encode()).hexdigest()
         if h in saved_files:
-            with open(os.path.join(saved_files_dir, h), 'rb') as f:
+            with open(os.path.join(processed_cache, h), 'rb') as f:
                 info = pickle.load(f)
         else:
             if predictors is None:
                 predictors = get_predictors()
             info = get_text_info(filepath, predictors)
-            with open(os.path.join(saved_files_dir, h), 'wb') as f:
+            with open(os.path.join(processed_cache, h), 'wb') as f:
                 pickle.dump(info, f)
         texts_info.append(info)
     logging.info("All files processed")
@@ -148,9 +153,13 @@ def extract_texts_info(files=None, saved_files_dir: str = None) -> List[Dict]:
 
 
 def example_usage() -> None:
-    FILE_NAME = "/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/cinema.txt"
-    files = [FILE_NAME]
-    texts_info = extract_texts_info(files)
+    def get_project_root() -> Path:
+        return Path(__file__).parent.parent.parent.parent
+    file_name: str = os.path.join(get_project_root(), "example_usage/", "my_text.txt")
+    files = [file_name]
+    if __name__ == "__main__":
+        processed_cache = os.path.join(get_project_root(), ".processed_cache")
+    texts_info = extract_texts_info(files, processed_cache=processed_cache)
 
     print("Done")
 
