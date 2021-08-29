@@ -5,7 +5,7 @@ import pickle
 from src.script_extraction.sign.extract_script import create_signs
 from src.script_extraction.visualization.show_script import show_script
 
-saved_files_dir = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/saved/'
+saved_files_dir = '/texts/saved/'
 saved_files = [os.path.basename(f) for f in os.listdir(saved_files_dir)]
 TEXT_FOLDER = "/home/yessense/PycharmProjects/ScriptExtractionForVQA/texts/Race/"
 
