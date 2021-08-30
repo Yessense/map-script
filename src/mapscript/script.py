@@ -137,10 +137,11 @@ class Script:
             for role_object in action.objects:
                 # Only one role
                 if role_object.cluster is None:
-                    self._add_role_object_to_action(action_sign=action_sign,
-                                                    action=action,
-                                                    role_sign=self.objects_signs[role_object.lemma],
-                                                    role_object=role_object)
+                    if role_object.has_valid_meanings:
+                        self._add_role_object_to_action(action_sign=action_sign,
+                                                        action=action,
+                                                        role_sign=self.objects_signs[role_object.lemma],
+                                                        role_object=role_object)
                 # Role has cluster of fillers
                 else:
                     for role_cluster_object in role_object.cluster.objects:
