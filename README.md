@@ -28,7 +28,3 @@ script = Script(text_info)
 vis = Visualizator(script, save_to_file=False)
 vis.show()
 ```
-
-## Visualization
-
-![](./example_usage/Script.html)

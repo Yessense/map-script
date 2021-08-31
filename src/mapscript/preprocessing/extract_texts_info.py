@@ -4,7 +4,7 @@ import os.path
 import sys
 import pickle
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Any
 from allennlp.predictors.predictor import Predictor
 import nltk.data # type: ignore
 import hashlib # type: ignore
@@ -17,16 +17,18 @@ logging.basicConfig(level=logging.INFO,
                     datefmt='%H:%M:%S')
 
 
-def get_predictors():
+def get_predictors() -> Dict[str, Dict[str, Any]]:
     """
-    Retrieves all needed  predictors, load or unzip:
-    coreference
-    dependency
-    semantic role
+    Load or unzip all predictors:
+
+    - coreference
+    - dependency
+    - semantic role
+    - tokenizer
 
     Returns
     -------
-    out : dict of {str: str}
+    out: Dict[str, Dict[str, Any]]
         {'name': {'path': url,
                   'predictor': Predictor}}
     """
@@ -39,22 +41,19 @@ def get_predictors():
             'path': "https://storage.googleapis.com/allennlp-public-models/coref-spanbert-large-2021.03.10.tar.gz"},
     }
 
-    logging.info("-" * 40)
     logging.info("Loading predictors")
-    logging.info("-" * 40)
 
     for name in predictors:
-        logging.info(f'Loading: {name}.')
-
         predictors[name]['predictor'] = Predictor.from_path(predictors[name]['path'])
+        logging.info(f'{name} is loaded')
 
-    logging.info(f'Loading: nltk tokenizer.')
 
     # using nltk for splitting to sentences
     predictors['tokenizer'] = {'path': 'tokenizers/punkt/english.pickle'}
     predictors['tokenizer']['predictor'] = nltk.data.load(predictors['tokenizer']['path'])
+    logging.info(f'nltk tokenizer is loaded')
 
-    logging.info("Predictors loaded.")
+    logging.info("All predictors are loaded.")
     return predictors
 
 
@@ -81,7 +80,7 @@ def get_text_info(filename, predictors):
     with open(filename) as f:
         text = f.read()
 
-    logging.info(f"File {filename} is loaded.")
+    logging.info(f" {filename} is loaded.")
 
     text_info = {}
 
@@ -165,4 +164,5 @@ def example_usage() -> None:
 
 
 if __name__ == "__main__":
+
     example_usage()
