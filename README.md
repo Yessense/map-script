@@ -28,16 +28,18 @@ script = Script(text_info)
 vis = Visualizator(script, save_to_file=False)
 vis.show()
 ```
+## Text analysis 
+[comment]: <> (```text)
 
-#### my_text.txt
-```text
-A person went into a cafe.
-He sat down at a table and then ordered the dish of the day.
-The waiter brought him a hot meal.
-The man slowly finished the dish and then asked for the bill.
-He paid and left the cafe.
-```
-#### Text analysis 
-|![Example](./img/example.jpg?raw=true "Example")|
-|:--:| 
-| *text analysis* |
+[comment]: <> (A person went into a cafe.)
+
+[comment]: <> (He sat down at a table and then ordered the dish of the day.)
+
+[comment]: <> (The waiter brought him a hot meal.)
+
+[comment]: <> (The man slowly finished the dish and then asked for the bill.)
+
+[comment]: <> (He paid and left the cafe.)
+
+[comment]: <> (```)
+![Example](./img/example.jpg?raw=true "Example")
