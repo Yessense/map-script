@@ -30,7 +30,12 @@ vis.show()
 ```
 
 #### my_text.txt
+```text
+A person went into a cafe.
+He sat down at a table and then ordered the dish of the day.
+The waiter brought him a hot meal.
+The man slowly finished the dish and then asked for the bill.
+He paid and left the cafe.
+```
 
-> A person went into a cafe.
-> He sat down at a table and then ordered the dish of the day. The waiter brought him a hot meal. The man slowly finished the dish and then asked for the bill. He paid and left the cafe.
-
+![Example](/img/example.jpg?raw=true "Example")
