@@ -13,7 +13,6 @@ Do the following steps:
 
 ## Example usage
 
-
 ```python
 from mapscript.preprocessing.extract_texts_info import extract_texts_info
 from mapscript.script import Script
@@ -29,4 +28,9 @@ script = Script(text_info)
 vis = Visualizator(script, save_to_file=False)
 vis.show()
 ```
+
+#### my_text.txt
+
+> A person went into a cafe.
+> He sat down at a table and then ordered the dish of the day. The waiter brought him a hot meal. The man slowly finished the dish and then asked for the bill. He paid and left the cafe.
 
