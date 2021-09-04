@@ -16,7 +16,7 @@ class Script:
     def __init__(self, text_info: Dict[str, Any]):
         self._text_info: Dict[str, Any] = text_info
         self._role_int: Dict[Roles, int] = {role: i for i, role in enumerate(Roles)}
-        self.possible_roles = [0, 1]
+        self.possible_roles = [0, 1, 2]
 
         self._actions: List[Action] = []
         self._clusters: List[Cluster] = []
