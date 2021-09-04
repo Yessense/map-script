@@ -43,3 +43,7 @@ vis.show()
 
 [comment]: <> (```)
 ![Example](./img/example.jpg?raw=true "Example")
+
+## Visualization
+
+![Script](./img/script.png?raw=true "Script")
