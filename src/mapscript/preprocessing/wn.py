@@ -8,7 +8,7 @@ from nltk.wsd import lesk
 
 
 def get_meaning(sentence: List[str], lemma: str, pos: str) -> Tuple[int, int]:
-    synsets: List[Synset] = wn.synsets(lemma)
+    synsets: List[Synset] = [l for l in wn.synsets(lemma) if l.lemma == lemma]
 
     # word not represented in dict
     if not len(synsets):
@@ -47,10 +47,10 @@ def example_usage():
             'and', 'funny', '.']
 
     # stack overflow
-    for i, j in enumerate(wn.synsets('family')):
+    for i, j in enumerate(wn.synsets('man')):
         print('Meaning', i, 'NLTK ID', j.name())
         print('Definition:', j.definition())
-        print('Hypernyms:', ', '.join(list(chain(*[l.lemma_names() for l in j.hypernyms()]))))
+        print('Hypernyms:', ', '.join(list(chain(*[l.lemma_names() for l in j.hyponyms()]))))
 
     ss = lesk(sent, 'family')
 
