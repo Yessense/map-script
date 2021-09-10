@@ -32,6 +32,7 @@ class Script:
         self.add_roles()
         self.add_images()
         self.create_script()
+        self.resolve_hypernyms_hyponyms()
 
     def _add_action_sign(self, action: Action) -> None:
         name = action.lemma
@@ -234,6 +235,14 @@ class Script:
                 connector = cm.add_feature(action_sign.significances[cm_index + 1])
                 action_sign.add_out_significance(connector)
         return self.sign
+
+    def resolve_hypernyms_hyponyms(self):
+        for action in self.actions_signs:
+            significance: CausalMatrix
+            for significance in action.significances.values():
+                event: Event
+                for event in significance.cause:
+                    pass
 
 
 def main():
