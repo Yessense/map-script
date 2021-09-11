@@ -20,12 +20,18 @@ class SynObj:
     lemma: str
     number: int
     ss: Dict[str, Synset] = dataclasses.field(default_factory=dict)
+    hypernyms: Dict[str, Dict[str, Synset]] = dataclasses.field(default_factory=dict)
 
     def __post_init__(self):
         self.set_synset()
+        self.add_hypernyms()
 
     def set_synset(self):
         self.ss = get_synsets(self.lemma)
+
+    def add_hypernyms(self):
+        for name, ss in self.ss.items():
+            self.hypernyms[name] = get_hypernyms(ss)
 
 
 class Script:
@@ -257,34 +263,46 @@ class Script:
             significance: CausalMatrix
             for significance in action.significances.values():
                 event: Event
+                # checking each role in action
                 for event in significance.cause:
-                    if len(event.coincidences):
+                    # if 2 or more
+                    if len(event.coincidences) >= 2:
+                        # get all fillers -> Dict[str, SynObj]
                         fillers: Dict[str, SynObj] = dict()
+
                         connector: Connector
                         for connector in event.coincidences:
                             syn_obj = SynObj(lemma=connector.out_sign.name,
                                              number=connector.out_index - 1)
-                            if syn_obj.ss is not None:
-                                fillers[f'{syn_obj.lemma}:{syn_obj.number}'] = syn_obj
-                        self.find_l1_neighbors(fillers)
+                            fillers[f'{syn_obj.lemma}:{syn_obj.number}'] = syn_obj
+
+                        # get list of changes
+                        self.get_neighbours(fillers)
                         print("Done")
 
-    def find_l1_neighbors(self, fillers: Dict[str, SynObj]):
-        for filler in fillers.values():
-            for synset in filler.ss.values():
-                hypernyms: Dict[str, Synset] = get_hypernyms(synset)
-                wow = []
-                for hypernym in hypernyms:
-                    for filler_1 in fillers.values():
-                        if hypernym in filler_1.ss:
-                            wow.append((hypernym, synset.name()))
-                print("Done")
+    def get_neighbours(self, fillers: Dict[str, SynObj]):
+        # coreference values f.e [man, person]
+        for name, syn_obj in fillers.items():
+            # one value is hypernym for another
+            l1 = []
+            # two values has the same hypernym
+            l2 = []
+            # for semantic value f.e. man.n.01
+            for ss_name, synset in syn_obj.ss.items():
+                hypernyms: Dict[str, Synset] = syn_obj.hypernyms[ss_name]
+                for h_name, hypernym in hypernyms.items():
+                    for name_1, syn_obj_1 in fillers.items():
+                        if name_1 != name:
+                            # if hypernym contains man.n.01
+                            if h_name in syn_obj_1.ss:
+                                l1.append((hypernym, synset))
+                            for ss_name_1, synset_1 in syn_obj_1.ss.items():
+                                if h_name in syn_obj_1.hypernyms[ss_name_1]:
+                                    l2.append((synset, synset_1, hypernym))
 
 
 
-
-
-
+            print("Done")
 
 
 def main():
