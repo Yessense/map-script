@@ -1,15 +1,31 @@
+import dataclasses
 import itertools
 from itertools import combinations
 from typing import List, Tuple, Dict, Any, Union, Optional, Set
 
 import networkx as nx
 from mapcore.swm.src.components.semnet import Sign, Event, CausalMatrix, Connector
+from nltk.corpus.reader import Synset
 
+from .preprocessing.wn import get_synsets, get_hypernyms
 from .preprocessing.combine_actions_with_clusters import combine_actions_with_clusters
 from .preprocessing.extract_clusters import extract_clusters, resolve_pronouns
 from .preprocessing.extract_semantic_roles import extract_actions
 from .preprocessing.words_object import Roles, Action, Cluster, Obj, WordsObject
 from .samples.text_info.text_info_restaurant import create_text_info_restaurant
+
+
+@dataclasses.dataclass
+class SynObj:
+    lemma: str
+    number: int
+    ss: Dict[str, Synset] = dataclasses.field(default_factory=dict)
+
+    def __post_init__(self):
+        self.set_synset()
+
+    def set_synset(self):
+        self.ss = get_synsets(self.lemma)
 
 
 class Script:
@@ -242,7 +258,33 @@ class Script:
             for significance in action.significances.values():
                 event: Event
                 for event in significance.cause:
-                    pass
+                    if len(event.coincidences):
+                        fillers: Dict[str, SynObj] = dict()
+                        connector: Connector
+                        for connector in event.coincidences:
+                            syn_obj = SynObj(lemma=connector.out_sign.name,
+                                             number=connector.out_index - 1)
+                            if syn_obj.ss is not None:
+                                fillers[f'{syn_obj.lemma}:{syn_obj.number}'] = syn_obj
+                        self.find_l1_neighbors(fillers)
+                        print("Done")
+
+    def find_l1_neighbors(self, fillers: Dict[str, SynObj]):
+        for filler in fillers.values():
+            for synset in filler.ss.values():
+                hypernyms: Dict[str, Synset] = get_hypernyms(synset)
+                wow = []
+                for hypernym in hypernyms:
+                    for filler_1 in fillers.values():
+                        if hypernym in filler_1.ss:
+                            wow.append((hypernym, synset.name()))
+                print("Done")
+
+
+
+
+
+
 
 
 def main():
