@@ -50,13 +50,21 @@ def get_hypernyms(synset: Synset) -> Dict[str, Synset]:
     return {ss.name(): ss for ss in synset.hypernyms()}
 
 
+def get_synset_number(lemma: str, synset_name) -> Tuple[int, int]:
+    ss: List[Synset] = wn.synsets(lemma)
+    for i, synset in enumerate(ss):
+        if synset.name() == synset_name:
+            return i, len(ss)
+    return -1, -1
+
+
 def example_usage():
     sent = ['We', 'choose', 'movie', 'for', 'the', 'family', ',', 'we', 'need', 'something', 'pleasant', ',', 'amusing',
             'and', 'funny', '.']
 
     ss = get_synsets("man")
     # stack overflow
-    for i, j in enumerate(wn.synsets('man')):
+    for i, j in enumerate(wn.synsets('individual')):
         print('Meaning', i, 'NLTK ID', j.name())
         print('Definition:', j.definition())
         z = j.hypernyms()

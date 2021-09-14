@@ -7,7 +7,7 @@ import networkx as nx
 from mapcore.swm.src.components.semnet import Sign, Event, CausalMatrix, Connector
 from nltk.corpus.reader import Synset
 
-from .preprocessing.wn import get_synsets, get_hypernyms
+from .preprocessing.wn import get_synsets, get_hypernyms, get_synset_number
 from .preprocessing.combine_actions_with_clusters import combine_actions_with_clusters
 from .preprocessing.extract_clusters import extract_clusters, resolve_pronouns
 from .preprocessing.extract_semantic_roles import extract_actions
@@ -277,16 +277,54 @@ class Script:
                             fillers[f'{syn_obj.lemma}:{syn_obj.number}'] = syn_obj
 
                         # get list of changes
-                        self.get_neighbours(fillers)
-                        print("Done")
+                        l1, l2 = self.get_neighbours(fillers)
+                        self.process_l1(l1, event, significance)
+
+    def create_synset_signs(self, synset: Synset,
+                            event: Event,
+                            significance: CausalMatrix):
+        for lemma in synset.lemma_names():
+            ss_number, ss_len = get_synset_number(lemma, synset.name())
+            if lemma in self.objects_signs:
+                sign = self.objects_signs[lemma]
+            else:
+                sign = Sign(lemma)
+
+                # add meanings and significances for each wn meaning
+                for i in range(ss_len):
+                    # add signifincances
+                    sign.add_significance(pm=None)
+
+                    # Creating place for adding images
+                    image = sign.add_image(pm=None)
+                    image.add_event(event=Event(order=0))
+
+                self.objects_signs[lemma] = sign
+            connector: Connector = Connector(in_sign=significance.sign,
+                                             out_sign=sign,
+                                             in_index=significance.index,  # action signifincance number
+                                             out_index=ss_number + 1,
+                                             # role significance number
+                                             in_order=event.order)  # role number (Event number)
+            event.add_coincident(base='significance', connector=connector)
+
+    def process_l1(self, l1: List[Tuple[Synset, Synset]],
+                   event: Event,
+                   significance: CausalMatrix):
+        for synset, hypernym in l1:
+            self.create_synset_signs(synset, event, significance)
+            self.create_synset_signs(hypernym, event, significance)
+
+
+
 
     def get_neighbours(self, fillers: Dict[str, SynObj]):
+        # one value is hypernym for another
+        l1: List[Tuple[Synset, Synset]] = []
+        # two values has the same hypernym
+        l2: List[Tuple[Synset, Synset, Synset]] = []
         # coreference values f.e [man, person]
         for name, syn_obj in fillers.items():
-            # one value is hypernym for another
-            l1 = []
-            # two values has the same hypernym
-            l2 = []
             # for semantic value f.e. man.n.01
             for ss_name, synset in syn_obj.ss.items():
                 hypernyms: Dict[str, Synset] = syn_obj.hypernyms[ss_name]
@@ -295,14 +333,13 @@ class Script:
                         if name_1 != name:
                             # if hypernym contains man.n.01
                             if h_name in syn_obj_1.ss:
-                                l1.append((hypernym, synset))
+                                l1.append((synset, hypernym))
                             for ss_name_1, synset_1 in syn_obj_1.ss.items():
                                 if h_name in syn_obj_1.hypernyms[ss_name_1]:
                                     l2.append((synset, synset_1, hypernym))
+                                    # TODO: remove double check
 
-
-
-            print("Done")
+        return l1, l2
 
 
 def main():
