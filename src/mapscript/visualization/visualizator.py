@@ -18,7 +18,7 @@ class ScriptNode(Enum):
 
 class ScriptStepNode(Enum):
     color = '#0047AB'
-    size = 25
+    size = 23
 
 
 class SignNode(Enum):
@@ -43,13 +43,24 @@ class ImageEdge(Enum):
 class Visualizator:
     def __init__(self, script: Script,
                  directed: Optional[bool] = False,
-                 save_to_file: Optional[bool] = False):
+                 save_to_file: Optional[bool] = False,
+                 show_buttons: bool = False):
         # script
         self.script: Sign = script.sign
         self.objects_signs = script.objects_signs
 
+        # manual graph tuning
+        self.show_buttons = show_buttons
+
         # graph
-        self.net = Network(height='100%', width='100%', directed=directed, notebook=save_to_file)
+        scale = '50%' if self.show_buttons else '100%'
+        self.net = Network(height=scale,
+                           width=scale,
+                           directed=directed,
+                           notebook=save_to_file)
+
+        if not self.show_buttons:
+            self.set_physic_options()
 
         # All possible roles
         self.role_int: Dict[Roles, int] = {role: i for i, role in enumerate(Roles)}
@@ -61,9 +72,10 @@ class Visualizator:
         self.create_objects_nodes()
         self.create_objects_edges()
 
-        self.set_physic_options()
 
     def show(self):
+        if self.show_buttons:
+            self.net.show_buttons()
         self.net.show("Script.html")
         return self
 
@@ -125,14 +137,33 @@ class Visualizator:
 
     def set_physic_options(self) -> None:
         self.net.set_options("""
-        var options = {
-          "physics": {
-            "barnesHut": {
-             "gravitationalConstant": -10050
+            var options = {
+              "nodes": {
+                "borderWidth": 4,
+                "borderWidthSelected": 6,
+                "font": {
+                  "size": 20,
+                  "face": "verdana"
+                }
+              },
+              "edges": {
+                "color": {
+                  "inherit": true
+                },
+                "font": {
+                  "face": "verdana"
+                },
+                "smooth": false
+              },
+              "physics": {
+                "barnesHut": {
+                  "gravitationalConstant": -10900,
+                  "springLength": 75
+                },
+                "minVelocity": 0.75
               }
-          }
-        }
-        """)
+            }      
+            """)
 
     def _process_connector(self, connector: Connector,
                            image: Optional[bool] = False):

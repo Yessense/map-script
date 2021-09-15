@@ -54,7 +54,7 @@ class Script:
         self.add_roles()
         self.add_images()
         self.create_script()
-        self.resolve_hypernyms_hyponyms()
+        # self.resolve_hypernyms_hyponyms()
 
     def _add_action_sign(self, action: Action) -> None:
         name = action.lemma
