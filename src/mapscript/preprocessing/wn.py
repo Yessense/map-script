@@ -62,9 +62,9 @@ def example_usage():
     sent = ['We', 'choose', 'movie', 'for', 'the', 'family', ',', 'we', 'need', 'something', 'pleasant', ',', 'amusing',
             'and', 'funny', '.']
 
-    ss = get_synsets("man")
+    ss = get_synsets("run")
     # stack overflow
-    for i, j in enumerate(wn.synsets('individual')):
+    for i, j in enumerate(wn.synsets('run')):
         print('Meaning', i, 'NLTK ID', j.name())
         print('Definition:', j.definition())
         z = j.hypernyms()

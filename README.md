@@ -28,7 +28,8 @@ script = Script(text_info)
 vis = Visualizator(script, save_to_file=False)
 vis.show()
 ```
-## Text analysis 
+
+[comment]: <> (## Text analysis )
 [comment]: <> (```text)
 
 [comment]: <> (A person went into a cafe.)
@@ -42,8 +43,27 @@ vis.show()
 [comment]: <> (He paid and left the cafe.)
 
 [comment]: <> (```)
-![Example](./img/example.jpg?raw=true "Example")
 
 ## Visualization
+### Text
 
-![Script](./img/script.png?raw=true "Script")
+![Example](./img/separate_scripts_example.jpg?raw=true "Example")
+
+#### Sentence 1
+
+![Sentence 1.](./img/text 1.png?raw=true "Sentence 1")
+
+#### Sentence 1 - 2 
+![Sentence 1 - 2.](./img/text 2.png?raw=true "Sentence 2")
+
+#### Sentence 1 - 3
+![Sentence 1 - 3.](./img/text 3.png?raw=true "Sentence 3")
+
+#### Sentence 1 - 4
+![Sentence 1 - 4.](./img/text 4.png?raw=true "Sentence 4")
+
+#### Sentence 1 - 5
+![Sentence 1 - 5.](./img/text 5.png?raw=true "Sentence 5")
+
+#### Sentence 1 - 6
+![Sentence 1 - 6.](./img/text 6.png?raw=true "Sentence 6")
