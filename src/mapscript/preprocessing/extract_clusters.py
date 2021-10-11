@@ -3,9 +3,9 @@ Add roles, _clusters
 """
 from typing import Dict, List, Tuple
 
-from .resolve_phrases import resolve_phrases, get_trees_list
-from .words_object import Cluster, Position, Obj, Roles, POS
-from ..samples.text_info.text_info_restaurant import create_text_info_restaurant
+from src.mapscript.preprocessing.resolve_phrases import resolve_phrases, get_trees_list
+from src.mapscript.preprocessing.words_object import Cluster, Position, Obj, Roles, POS
+from src.mapscript.samples.text_info.text_info_restaurant import create_text_info_restaurant
 
 PRON_I = {"i", "me", "my", "mine", "myself"}
 PRON_I_REPLACE = "person"
