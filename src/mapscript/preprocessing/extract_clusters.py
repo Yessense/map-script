@@ -3,9 +3,9 @@ Add roles, _clusters
 """
 from typing import Dict, List, Tuple
 
-from src.mapscript.preprocessing.resolve_phrases import resolve_phrases, get_trees_list
-from src.mapscript.preprocessing.words_object import Cluster, Position, Obj, Roles, POS
-from src.mapscript.samples.text_info.text_info_restaurant import create_text_info_restaurant
+from .resolve_phrases import resolve_phrases, get_trees_list
+from .words_object import Cluster, Position, Obj, Roles, POS
+# from .samples.text_info.text_info_restaurant import create_text_info_restaurant
 
 PRON_I = {"i", "me", "my", "mine", "myself"}
 PRON_I_REPLACE = "person"
@@ -117,13 +117,13 @@ def resolve_pronouns(clusters: List[Cluster]):
                 replace_objects_in_cluster(cluster, replace_word=PRON_IT_REPLACE)
 
 
-def example_usage() -> None:
-    # _text_info
-    text_info = create_text_info_restaurant()
-
-    clusters = extract_clusters(text_info)
-    print("DONE")
-
-
-if __name__ == '__main__':
-    example_usage()
+# def example_usage() -> None:
+#     _text_info
+#     text_info = create_text_info_restaurant()
+#
+#     clusters = extract_clusters(text_info)
+#     print("DONE")
+# #
+# #
+# if __name__ == '__main__':
+#     example_usage()
