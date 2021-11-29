@@ -3,7 +3,7 @@ from src.mapscript.script import Script
 from src.mapscript.visualization.visualizator import Visualizator
 from src.mapscript.vsa import encoder
 
-filepath = '/home/yessense/PycharmProjects/ScriptExtractionForVQA/Approved/jack/restaurant.txt'
+filepath = '/six sentences text example/jack/restaurant.txt'
 text_info = extract_texts_info([filepath])[0]
 script = Script(text_info)
 script_encoder = encoder.ScriptEncoder(script, 1)

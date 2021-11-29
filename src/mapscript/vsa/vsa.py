@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 
@@ -37,6 +37,7 @@ def generate(r_state=None):
 
 def cycle_shift(v, n=1) -> np.ndarray:
     return np.roll(v, n)
+
 
 def make_unitary(v):
     fft_val = np.fft.fft(v)
@@ -86,13 +87,16 @@ class ItemMemory:
     Default dimension dim -- 1000
     """
 
-    def __init__(self, name, d=1000):
-        # self.dim = globals()['VECTOR_SYMBOLIC_ARCHITECTURE_DIMENSION']
-        self.item_memory_name = name
-        self.dim = d
+    def __init__(self, name: str,
+                 dimension: int = 1000,
+                 random_state: Optional[np.random.RandomState] = None):
+        self.random_state = random_state
+        self.dimension: int = dimension
+        self.memory: np.ndarray = np.zeros((1, self.dimension))
+
+        self.item_memory_name: str = name
         self.item_count: int = 0
         self._names: List[str] = []
-        self.memory = np.zeros((1, self.dim))
 
     def append(self, name, hd_vec):
         """Add hypervector to a memory."""
@@ -112,7 +116,7 @@ class ItemMemory:
         set_dimension(vsa_dimension=d)
 
         for name in names:
-            self.append(name, hd_vec=generate())
+            self.append(name, hd_vec=generate(r_state=self.random_state))
 
     def search(self, hd_vec_query, distance=True):
         """Return distances from query hypervector to every hypervector in the item memory."""
