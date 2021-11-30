@@ -88,9 +88,10 @@ def extract_clusters(text_info: Dict) -> List[Cluster]:
 
 
 def replace_objects_in_cluster(cluster: Cluster, replace_word: str):
-    cluster.objects = cluster.objects[:1]
-    cluster.objects[0]._lemma = replace_word
-    cluster.objects[0].pos = POS.NOUN
+    if len(cluster.objects):
+        cluster.objects = cluster.objects[:1]
+        cluster.objects[0]._lemma = replace_word
+        cluster.objects[0].pos = POS.NOUN
 
 
 def resolve_pronouns(clusters: List[Cluster]):
