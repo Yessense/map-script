@@ -44,7 +44,14 @@ class Visualizator:
     def __init__(self, script: Script,
                  directed: Optional[bool] = False,
                  save_to_file: Optional[bool] = False,
-                 show_buttons: bool = False):
+                 show_buttons: bool = False,
+                 name: Optional[str] = None):
+
+
+        if name is None:
+            name = 'Script'
+        name += '.html'
+        self.name = name
         # script
         self.script: Sign = script.sign
         self.objects_signs = script.objects_signs
@@ -76,7 +83,8 @@ class Visualizator:
     def show(self):
         if self.show_buttons:
             self.net.show_buttons()
-        self.net.show("Script.html")
+
+        self.net.show(self.name)
         return self
 
     def create_script_step_nodes(self) -> None:
