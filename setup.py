@@ -1,12 +1,10 @@
 from setuptools import setup
 
-
 with open(file='requirements.txt', mode='r') as requirements_handle:
     requirements = requirements_handle.read().splitlines()
 
 with open(file="README.md", mode="r") as readme_handle:
     long_description = readme_handle.read()
-
 
 setup(
     name='mapscript',
@@ -22,9 +20,9 @@ setup(
 
     url='https://github.com/Yessense/map-script',
 
-
-    packages=["mapscript",  "mapscript.preprocessing",
-                "mapscript.visualization", "mapscript.samples.text_info"],
+    packages=["mapscript", "mapscript.preprocessing",
+              "mapscript.visualization", "mapscript.samples.text_info",
+              "mapscript.vsa"],
     package_dir={'': 'src'},
 
     install_requires=requirements,
