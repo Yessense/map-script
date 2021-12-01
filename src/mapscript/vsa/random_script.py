@@ -6,8 +6,8 @@ from itertools import count
 
 import numpy as np
 
-import vsa
-from vsa import HDVector
+from ..vsa import vsa
+from .vsa import HDVector
 from nltk.corpus import wordnet as wn
 
 
