@@ -168,6 +168,8 @@ class Script:
                 # Role has cluster of fillers
                 else:
                     for role_cluster_object in role_object.cluster.objects:
+                        if role_cluster_object.lemma not in self.objects_signs:
+                            self._add_object_sign(role_cluster_object.lemma)
                         self._add_role_object_to_action(action_sign=action_sign,
                                                         action=action,
                                                         role_sign=self.objects_signs[role_cluster_object.lemma],
