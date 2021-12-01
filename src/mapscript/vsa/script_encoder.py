@@ -7,9 +7,9 @@ from typing import List, Optional
 import pandas as pd # type: ignore
 from mapcore.swm.src.components.semnet import Sign, CausalMatrix, Event, Connector # type: ignore
 
-from random_script import Script, Step, Role, Bundle, SynSet, Roles, create_random_script # type: ignore
-from src.mapscript.preprocessing.wn import get_words_list
-from vsa import ItemMemory, HDVector # type: ignore
+from .random_script import Script, Step, Role, Bundle, SynSet, Roles, create_random_script # type: ignore
+from ..preprocessing.wn import get_words_list
+from .vsa import ItemMemory, HDVector # type: ignore
 import vsa
 
 DIMENSION = 1000
