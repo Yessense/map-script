@@ -1,17 +1,15 @@
-import os
 import pickle
 import string
-import sys
 
 # sys.path.append(".vsa")
-from typing import List, Optional, Any
+from typing import List, Optional
 
-import pandas as pd
-import numpy as np
-from mapcore.swm.src.components.semnet import Sign, CausalMatrix, Event, Connector
+import pandas as pd # type: ignore
+from mapcore.swm.src.components.semnet import Sign, CausalMatrix, Event, Connector # type: ignore
 
-from random_script import Script, Step, Role, Bundle, SynSet, Roles
-from vsa import ItemMemory, HDVector
+from random_script import Script, Step, Role, Bundle, SynSet, Roles, create_random_script # type: ignore
+from src.mapscript.preprocessing.wn import get_words_list
+from vsa import ItemMemory, HDVector # type: ignore
 import vsa
 
 DIMENSION = 1000
@@ -53,7 +51,7 @@ class ScriptEncoder:
             if decode_noise:
                 step: Step = self.decode_step(step_v_noise, name=name, idx=i, decode_noise=decode_noise)
             else:
-                step: Step = self.decode_step(step_v, name=name, idx=i)
+                step = self.decode_step(step_v, name=name, idx=i)
             steps.append(step)
 
         # Create script
@@ -84,7 +82,7 @@ class ScriptEncoder:
         if decode_noise:
             roles: List[Role] = self.decode_roles(roles_v_noise, decode_noise=decode_noise)
         else:
-            roles: List[Role] = self.decode_roles(roles_v, decode_noise=decode_noise)
+            roles = self.decode_roles(roles_v, decode_noise=decode_noise)
 
         step: Step = Step(action=action, roles=roles, name=name, idx=idx)
 
@@ -110,7 +108,7 @@ class ScriptEncoder:
             if decode_noise:
                 role: Role = self.decode_role(roles_noise)
             else:
-                role: Role = self.decode_role(role_v)
+                role  = self.decode_role(role_v)
 
             roles.append(role)
         return roles
@@ -176,7 +174,7 @@ class ScriptEncoder:
         self.scripts_im[script_name] = script_v
         return script_v
 
-    def encode_script_step(self, step: Event, script_name: str, step_index:int) -> HDVector:
+    def encode_script_step(self, step: Event, script_name: str, step_index: int) -> HDVector:
         """ Script step = [action_role * action_v + roles_role * roles_v]"""
 
         step_name: str = f'{script_name}:{step_index}'
@@ -197,8 +195,6 @@ class ScriptEncoder:
         connector: Connector = list(step.coincidences)[0]
         action_sign: Sign = connector.out_sign
         action_name = action_sign.name
-
-        roles: List[HDVector] = []
 
         significance_index: int
         significance: CausalMatrix
@@ -233,38 +229,48 @@ class ScriptEncoder:
         self.steps_im[step_name] = step_v
         return step_v
 
-    def encode_role(self, role_index:int, role_event: Event, step_name: str) -> HDVector:
+    def encode_role(self, role_index: int, role_event: Event, step_name: str) -> HDVector:
         """ Role = [role_role * role_v + synset_bundle_role * synset_bundle_v]"""
 
-        role_r = self.utils_im['role_r']
-        synset_bundle_r = self.utils_im['synset_bundle_r']
-        role_v = self.roles_im[role.role.value]
+        role_name: str = list(Roles)[role_index].value
 
-        vectors = []
-        for synset in role.bundle.items:
-            vector = self.encode_synset_v(synset)
-            synset.vector = vector
+        role_r: HDVector = self.utils_im['role_r']
+        synset_bundle_r: HDVector = self.utils_im['synset_bundle_r']
+        role_v: HDVector = self.roles_im[role_name]
+
+        vectors: List[HDVector] = []
+        names: List[str] = []
+        connector: Connector
+        for connector in role_event.coincidences:
+            obj_name: str = connector.out_sign.name
+            obj_number: int = connector.out_index
+
+            names.append(f'{obj_name}:{obj_number}')
+
+            vector = self.encode_synset_v(obj_name, obj_number)
             vectors.append(vector)
 
-        synset_bundle_v = vsa.bundle(*vectors)
-        self.synset_bundle_im[" ".join([item.name for item in role.bundle.items])] = synset_bundle_v
-        role.bundle.vector = synset_bundle_v
+        synset_bundle_v: HDVector = vsa.bundle(*vectors)
+        self.synset_bundle_im[" ".join(names)] = synset_bundle_v
 
-        full_role_v = vsa.bundle(role_r * role_v, synset_bundle_r * synset_bundle_v)
-        self.full_roles_im[step_name + ' ' + role.role.value] = full_role_v
-        role.vector = full_role_v
-        return role.vector
+        full_role_v: HDVector = vsa.bundle(role_r * role_v, synset_bundle_r * synset_bundle_v)
+        roles_name: str = f'{step_name}:{role_name}'
+        self.full_roles_im[roles_name] = full_role_v
 
-    def encode_synset_v(self, synset: SynSet) -> HDVector:
+        return full_role_v
+
+    def encode_synset_v(self, name: str, number: int) -> HDVector:
         """ Create HD vector of synset and add it to memories"""
-        ss: Optional[HDVector] = self.synsets_im[synset.name]
+        synset_name = f'{name}:{number}'
+        synset_v: Optional[HDVector] = self.synsets_im[synset_name]
 
         # create sysnset vector if not exist
-        if ss is None:
+        if synset_v is None:
+            words_list = get_words_list(name, number)
             vectors = []
 
             # synset = [sum(word)]
-            for word in synset.words_list:
+            for word in words_list:
                 vector = self.words_im[word]
 
                 # create words from alphabet if not exist
@@ -273,11 +279,10 @@ class ScriptEncoder:
                     self.words_im[word] = vector
 
                 vectors.append(vector)
-            ss = vsa.bundle(*vectors)
-            self.synsets_im[synset.name] = ss
+            synset_v = vsa.bundle(*vectors)
+            self.synsets_im[synset_name] = synset_v
 
-        synset.vector = ss
-        return ss
+        return synset_v
 
     @staticmethod
     def create_roles_im() -> vsa.ItemMemory:
@@ -295,106 +300,10 @@ class ScriptEncoder:
     @staticmethod
     def word_to_vector(word: str, alphabet_im: ItemMemory) -> HDVector:
         """Encode word by binding letters together"""
-        vector = alphabet_im[word[0]]
+        vector: HDVector = alphabet_im[word[0]]
 
         shift = 0
         for c in word[1:]:
             shift += 1
             vector = vector * alphabet_im[c].cycle_shift(shift)
         return vector
-
-
-class DecodingParams:
-    def __init__(self, noise: bool,
-                 check_role: bool, check_synset: bool):
-        self.check_role: bool = check_role
-        self.check_synset: bool = check_synset
-        self.noise: bool = noise
-        self.value: float = 0.
-
-    @property
-    def name(self):
-        name = []
-        if self.check_role:
-            name.append('bundle')
-        else:
-            name.append('role')
-        if self.check_synset:
-            name.append('words')
-        if self.noise:
-            name.append('noise')
-        name = "_".join(name)
-        return name
-
-
-def get_decoding_stats(n_iter: int,  # Number of iterations for the given script values to get the average similarity
-                       steps_l: int, steps_u: int,  # Upper and lower bound for the number of steps
-                       roles_l, roles_u,  # Upper and lower bound for the number of roles
-                       bundle_l, bundle_u,  # Upper and lower bound for the number items in bundle
-                       dump: bool = True  # Save or not
-                       ):
-    steps_range = range(steps_l, steps_u)
-    roles_range = range(roles_l, roles_u)
-    bundle_range = range(bundle_l, bundle_u)
-
-    script_generation_params = ['steps_n', 'roles_n', 'bundle_size']
-
-    decoding_variants: List[DecodingParams] = [DecodingParams(noise=False,
-                                                              check_role=False,
-                                                              check_synset=False),
-                                               DecodingParams(noise=False,
-                                                              check_role=True,
-                                                              check_synset=False),
-                                               DecodingParams(noise=False,
-                                                              check_role=True,
-                                                              check_synset=True),
-                                               DecodingParams(noise=True,
-                                                              check_role=False,
-                                                              check_synset=False),
-                                               DecodingParams(noise=True,
-                                                              check_role=True,
-                                                              check_synset=False),
-                                               DecodingParams(noise=True,
-                                                              check_role=True,
-                                                              check_synset=True)]
-    columns = script_generation_params + [params.name for params in decoding_variants]
-
-    decoding_stats = []
-
-    for steps in steps_range:
-        for roles_n in roles_range:
-            for bundle_n in bundle_range:
-                for p in decoding_variants:
-                    p.value = 0
-
-                for l in range(n_iter):
-                    script_encoder = ScriptEncoder()
-
-                    random_script = create_random_script(n_steps=(steps, steps),
-                                                         n_roles=(roles_n, roles_n),
-                                                         n_bundle_items=(bundle_n, bundle_n))
-
-                    script_encoder.encode_script(random_script)
-
-                    for p in decoding_variants:
-                        p.value += random_script.sim(
-                            script_encoder.decode_script(random_script.name,
-                                                         decode_noise=p.noise),
-                            check_role=p.check_role, check_synset=p.check_synset)
-
-                stats = [steps, roles_n, bundle_n]
-
-                for p in decoding_variants:
-                    p.value /= n_iter
-                    stats.append(p.value)
-
-                decoding_stats.append(stats)
-
-    decoding_stats_df = pd.DataFrame(data=decoding_stats, columns=columns)
-
-    if dump:
-        with open('decoding_stats1.pkl', 'wb') as f:
-            pickle.dump(decoding_stats_df, f)
-
-    print("Done")
-    return decoding_stats_df

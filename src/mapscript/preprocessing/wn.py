@@ -57,6 +57,18 @@ def get_synset_number(lemma: str, synset_name) -> Tuple[int, int]:
             return i, len(ss)
     return -1, -1
 
+def get_words_list(name: str, number: int) -> List[str]:
+    words_list: List[str] = []
+    synsets: List[Synset] = wn.synsets(name)
+
+    if not len(synsets) or number > len(synsets):
+        words_list.append(name)
+    else:
+        words_list += synsets[number].lemma_names()
+
+    return words_list
+
+
 
 def example_usage():
     sent = ['We', 'choose', 'movie', 'for', 'the', 'family', ',', 'we', 'need', 'something', 'pleasant', ',', 'amusing',
