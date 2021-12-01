@@ -251,7 +251,9 @@ class ScriptEncoder:
             vectors.append(vector)
 
         synset_bundle_v: HDVector = vsa.bundle(*vectors)
-        self.synset_bundle_im[" ".join(names)] = synset_bundle_v
+        synset_bundle_name = " ".join(names)
+        if self.synset_bundle_im[synset_bundle_name] is None:
+            self.synset_bundle_im[synset_bundle_name] = synset_bundle_v
 
         full_role_v: HDVector = vsa.bundle(role_r * role_v, synset_bundle_r * synset_bundle_v)
         roles_name: str = f'{step_name}:{role_name}'
