@@ -61,7 +61,7 @@ def get_words_list(name: str, number: int) -> List[str]:
     words_list: List[str] = []
     synsets: List[Synset] = wn.synsets(name)
 
-    if not len(synsets) or number > len(synsets):
+    if not len(synsets) or number >= len(synsets):
         words_list.append(name)
     else:
         words_list += synsets[number].lemma_names()
