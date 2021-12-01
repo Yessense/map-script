@@ -35,7 +35,7 @@ class SynObj:
 
 
 class Script:
-    def __init__(self, text_info: Dict[str, Any]):
+    def __init__(self, text_info: Dict[str, Any], name: str = 'Script'):
         self._text_info: Dict[str, Any] = text_info
         self._role_int: Dict[Roles, int] = {role: i for i, role in enumerate(Roles)}
         self.possible_roles = [0, 1, 2]
@@ -48,7 +48,8 @@ class Script:
         self.actions_signs: List[Sign] = []
         self.objects_signs: Dict[str, Sign] = dict()
 
-        self.sign: Sign = Sign("Script")
+        self.name = name
+        self.sign: Sign = Sign(name)
 
         self.create_signs()
         self.add_roles()
