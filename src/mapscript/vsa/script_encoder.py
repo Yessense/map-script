@@ -296,7 +296,7 @@ class ScriptEncoder:
     def create_alphabet_im() -> ItemMemory:
         """Create Alphabet item memory"""
         alphabet_im = ItemMemory(name='Alphabet', dimension=DIMENSION)
-        alphabet_im.append_batch(names=list(string.ascii_letters + string.punctuation + string.digits))
+        alphabet_im.append_batch(names=list(string.ascii_letters + string.punctuation + string.digits + '’'))
         return alphabet_im
 
     @staticmethod
