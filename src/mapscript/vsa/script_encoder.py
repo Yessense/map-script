@@ -198,7 +198,7 @@ class ScriptEncoder:
         action_significance_number = connector.out_index
 
         role_event: Event
-        for role_index, role_event in enumerate(action_sign.significances[action_significance_number]):
+        for role_index, role_event in enumerate(action_sign.significances[action_significance_number].cause):
             if not len(role_event.coincidences):
                 continue
             else:
