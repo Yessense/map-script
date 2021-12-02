@@ -195,28 +195,17 @@ class ScriptEncoder:
         connector: Connector = list(step.coincidences)[0]
         action_sign: Sign = connector.out_sign
         action_name = action_sign.name
+        action_significance_number = connector.out_index
 
-        significance_index: int
-        significance: CausalMatrix
-        for significance_index, significance in enumerate(action_sign.significances.values()):
-            # only one significance CM is used for representing action significance
-            used_significance = False
-
-            role_event: Event
-            for role_index, role_event in enumerate(significance.cause):
-                if not len(role_event.coincidences):
-                    continue
-                else:
-                    used_significance = True
-
-                    # bundle roles multiplied by action vector.
-                    # action vector permuted by 2 + i times because shift is ** function
-                    role_v = self.encode_role(role_index, role_event, step_name)
-                    roles.append(role_v * shift_role_v.cycle_shift(2 + role_index))
-
-            if used_significance:
-                action_significance_number = significance_index
-                break
+        role_event: Event
+        for role_index, role_event in enumerate(action_sign.significances[action_significance_number]):
+            if not len(role_event.coincidences):
+                continue
+            else:
+                # bundle roles multiplied by action vector.
+                # action vector permuted by 2 + i times because shift is ** function
+                role_v = self.encode_role(role_index, role_event, step_name)
+                roles.append(role_v * shift_role_v.cycle_shift(2 + role_index))
 
         action_v = self.encode_synset_v(action_name, action_significance_number)
         # mark end of sequence by adding end vector
