@@ -291,10 +291,14 @@ class ScriptEncoder:
     @staticmethod
     def word_to_vector(word: str, alphabet_im: ItemMemory) -> HDVector:
         """Encode word by binding letters together"""
-        vector: HDVector = alphabet_im[word[0]]
+        vector: Optional[HDVector] = alphabet_im[word[0]]
 
+        if vector is None:
+            print(word[0])
         shift = 0
         for c in word[1:]:
             shift += 1
+            if vector is None:
+                print(c)
             vector = vector * alphabet_im[c].cycle_shift(shift)
         return vector
